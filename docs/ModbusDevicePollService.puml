@@ -1,0 +1,47 @@
+﻿
+@startuml
+
+
+[*] --> EstablishConnection
+
+EstablishConnection : Connect to device
+EstablishConnection --> Connected : device connected 
+EstablishConnection --> Disconnected : connect failed \n (3 retries) 
+EstablishConnection --> EstablishConnection : FailureRetryInterval
+
+Reconnect : Cleanup and
+Reconnect : reconnect
+Reconnect --> Connected
+Reconnect -> Reconnect : FailureRetryInterval
+
+Disconnected : Signal ConnectionChanged(false)
+Disconnected --> Reconnect
+
+
+Connected : Poll device image 
+Connected --> ConnectionStable : two successive polls return \n the same image
+Connected --> Disconnected  : device not connected \n or failed reads \n (3 retries) 
+
+ConnectionStable : Signal ConnectionChanged(true)
+ConnectionStable : optionally signal initial events
+ConnectionStable --> PollRegisters 
+
+PollRegisters : Read device image
+PollRegisters --> PollRegistersOk : OK
+PollRegisters --> PollRegistersFailed : FAILED
+
+PollRegistersOk : Check image changes  
+PollRegistersOk : Signal ProcessImageChanged  
+PollRegistersOk : Signal InputChanged
+PollRegistersOk : Wait PollInterval  
+PollRegistersOk --> PollRegisters
+
+PollRegistersFailed : Signal PollFailed 
+PollRegistersFailed : Increment retry 
+PollRegistersFailed : Wait PollRetryInterval 
+PollRegistersFailed --> PollRegisters : device connected \n and \n retry < PollRetries 
+PollRegistersFailed --> Disconnected  : device not connected \n or \n retry > PollRetries
+
+
+@enduml
+
