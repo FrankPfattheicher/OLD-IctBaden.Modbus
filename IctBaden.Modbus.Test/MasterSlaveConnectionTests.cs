@@ -5,9 +5,10 @@ using Xunit;
 
 namespace IctBaden.Modbus.Test
 {
+    [CollectionDefinition(nameof(MasterSlaveConnectionTests), DisableParallelization = true)]
     public class MasterSlaveConnectionTests : IDisposable
     {
-        private TestData _source;
+        private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
         private ConnectedSlave _client;

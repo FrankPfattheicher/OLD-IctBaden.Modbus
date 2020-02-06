@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Net.Sockets;
 
@@ -88,7 +89,16 @@ namespace Cet.IO.Net
                         timeoutExpired = false;
                         while (timeoutExpired == false)
                         {
-                            var length = this.Port.Available;
+                            var length = 0;
+                            try
+                            {
+                                length = this.Port.Available;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                                length = 0;
+                            }
 
                             if (length > 0)
                             {

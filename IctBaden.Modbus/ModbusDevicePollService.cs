@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace IctBaden.Modbus
 {
@@ -40,7 +41,7 @@ namespace IctBaden.Modbus
         private readonly int _pollCount;
         private readonly string _traceId;
 
-        private Thread _pollingThread;
+        private Task _pollingTask;
         private bool _forceInitialEvents;
         private ConnectedSlave _pollDevice;
         private Action _state;
@@ -103,18 +104,18 @@ namespace IctBaden.Modbus
             _failureCount = 0;
             GoState(EstablishConnection);
 
-            _pollingThread = new Thread(PollSource);
-            _pollingThread.Start();
+            _pollingTask = new Task(PollSource);
+            _pollingTask.Start();
             return true;
         }
 
         public void Stop()
         {
-            if (_pollingThread == null) return;
+            if (_pollingTask == null) return;
 
-            var p = _pollingThread;
-            _pollingThread = null;
-            p.Join(TimeSpan.FromSeconds(10));
+            var p = _pollingTask;
+            _pollingTask = null;
+            p.Wait(TimeSpan.FromSeconds(10));
 
             if (_pollDevice != null)
             {
@@ -135,7 +136,7 @@ namespace IctBaden.Modbus
         private void PollSource()
         {
             Trace.TraceInformation("PollSource started.");
-            while (_pollingThread != null)
+            while (_pollingTask != null)
             {
                 _state();
             }

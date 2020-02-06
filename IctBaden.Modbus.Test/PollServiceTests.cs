@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using IctBaden.Framework.Tron;
 using Xunit;
 
 namespace IctBaden.Modbus.Test
 {
+    [CollectionDefinition(nameof(PollServiceTests), DisableParallelization = true)]
     public class PollServiceTests : IDisposable
     {
-        private TestData _source;
+        private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
         private ConnectedSlave _client;
@@ -64,8 +66,8 @@ namespace IctBaden.Modbus.Test
         {
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Input, 0, 50);
             var started = poll.Start(TimeSpan.FromSeconds(1), false);
-
             Assert.True(started);
+            WaitForStableConnection(poll);
         }
 
         [Fact]
@@ -85,6 +87,7 @@ namespace IctBaden.Modbus.Test
             poll.ProcessImageChanged += (e) => { _processImageChanges++; };
             var started = poll.Start(TimeSpan.FromSeconds(1), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             Thread.Sleep(TimeSpan.FromSeconds(0.5));
             _processImageChanges = 0;
@@ -93,6 +96,16 @@ namespace IctBaden.Modbus.Test
             Assert.True(_processImageChanges == 0);
         }
 
+        private void WaitForStableConnection(ModbusDevicePollService poll)
+        {
+            for (var wait = 0; wait < 30; wait++)
+            {
+                if (poll.IsConnectionStable) return;
+                Task.Delay(100).Wait();
+            }
+            Assert.True(false, "Poll service not reach stable connection");
+        }
+        
         [Fact]
         public void PollServiceShouldSendFirstEventWithinOneSecond()
         {
@@ -100,6 +113,7 @@ namespace IctBaden.Modbus.Test
             poll.ProcessImageChanged += (e) => { _processImageChanges++; };
             var started = poll.Start(TimeSpan.FromSeconds(1), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             // after half second - change data
             Thread.Sleep(TimeSpan.FromSeconds(0.5));
@@ -117,6 +131,7 @@ namespace IctBaden.Modbus.Test
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Holding, 0, 50);
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             // after one second - terminate slave
             Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -136,6 +151,7 @@ namespace IctBaden.Modbus.Test
             poll.PollFailed += () => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             // after one second - terminate slave
             Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -163,6 +179,7 @@ namespace IctBaden.Modbus.Test
             poll.PollFailed += () => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             // wait for poll connected
             Thread.Sleep(TimeSpan.FromSeconds(1));
@@ -215,6 +232,7 @@ namespace IctBaden.Modbus.Test
             poll.PollFailed += () => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
+            WaitForStableConnection(poll);
 
             // wait for poll connected
             Thread.Sleep(TimeSpan.FromSeconds(2));

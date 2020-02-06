@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable EventNeverSubscribedTo.Global
 
 /*
  * A Modbus Slave is a TCP server
@@ -22,12 +25,13 @@ namespace IctBaden.Modbus
 {
     public class ModbusSlave
     {
-        private BackgroundWorker runner;
-        private Socket listener;
-        private readonly ManualResetEvent clientAccepted;
+        private Task _runner;
+        private CancellationTokenSource _cancel;
+        private Socket _listener;
+        private readonly ManualResetEvent _clientAccepted;
 
-        private readonly List<Socket> connectedMasters;
-        public bool IsConnected => connectedMasters.Count > 0;
+        private readonly List<Socket> _connectedMasters;
+        public bool IsConnected => _connectedMasters.Count > 0;
 
         public string Name { get; private set; }
         public ushort Port { get; private set; }
@@ -48,20 +52,19 @@ namespace IctBaden.Modbus
             Port = port;
             Id = id;
 
-            connectedMasters = new List<Socket>();
-            clientAccepted = new ManualResetEvent(false);
+            _connectedMasters = new List<Socket>();
+            _clientAccepted = new ManualResetEvent(false);
         }
 
         public void Start()
         {
-            listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-            listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
-            runner = new BackgroundWorker();
-            runner.DoWork += RunnerDoWork;
-            runner.WorkerSupportsCancellation = true;
-            runner.RunWorkerAsync();
+            _cancel = new CancellationTokenSource();
+            _runner = new Task(RunnerDoWork, _cancel.Token);
+            _runner.Start();
 
             Trace.TraceInformation("ModbusSlave: Started {0,5}:{1}  {2}", Port, Id, Name);
         }
@@ -72,15 +75,16 @@ namespace IctBaden.Modbus
 
             try
             {
-                foreach (var client in connectedMasters)
+                foreach (var client in _connectedMasters)
                 {
                     if (client.Connected)
                     {
-                        client.Disconnect(true);
+                        var disconnect = new SocketAsyncEventArgs()
+                        {
+                            DisconnectReuseSocket = true
+                        };
+                        client.DisconnectAsync(disconnect);
                     }
-                    client.Shutdown(SocketShutdown.Both);
-                    client.Close();
-                    client.Dispose();
                 }
             }
             catch (Exception ex)
@@ -90,10 +94,13 @@ namespace IctBaden.Modbus
             }
             try
             {
-                runner.CancelAsync();
-                listener.Close();
-                listener.Dispose();
-                listener = null;
+                _cancel.Cancel();
+                _runner.Wait();
+                _runner.Dispose();
+
+                _listener.Close();
+                _listener.Dispose();
+                _listener = null;
             }
             catch (Exception ex)
             {
@@ -102,16 +109,16 @@ namespace IctBaden.Modbus
             }
         }
 
-        void RunnerDoWork(object sender, DoWorkEventArgs e)
+        void RunnerDoWork()
         {
             try
             {
                 var ept = new IPEndPoint(IPAddress.Any, Port);
-                listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-                listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                listener.Bind(ept);
-                listener.Listen(10);
+                _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                _listener.Bind(ept);
+                _listener.Listen(10);
             }
             catch (Exception ex)
             {
@@ -119,15 +126,15 @@ namespace IctBaden.Modbus
                 return;
             }
 
-            clientAccepted.Set();
-            while (!runner.CancellationPending && listener.IsBound)
+            _clientAccepted.Set();
+            while(!_cancel.IsCancellationRequested && _listener.IsBound)
             {
                 try
                 {
-                    if (clientAccepted.WaitOne(1000, false))
+                    if (_clientAccepted.WaitOne(1000, false))
                     {
-                        clientAccepted.Reset();
-                        listener?.BeginAccept(AcceptClient, null);
+                        _clientAccepted.Reset();
+                        _listener?.BeginAccept(AcceptClient, null);
                     }
                 }
                 catch (SocketException ex)
@@ -140,17 +147,17 @@ namespace IctBaden.Modbus
 
         private void AcceptClient(IAsyncResult ar)
         {
-            clientAccepted.Set();
-            if (listener == null)
+            _clientAccepted.Set();
+            if (_listener == null)
                 return;
 
             try
             {
-                var client = listener.EndAccept(ar);
+                var client = _listener.EndAccept(ar);
                 var address = client.RemoteEndPoint.ToString();
 
                 Trace.TraceInformation("ModbusSlave: Client connected " + address);
-                connectedMasters.Add(client);
+                _connectedMasters.Add(client);
                 Connected?.Invoke(address);
                 LastAccess = DateTime.Now;
 
@@ -170,7 +177,7 @@ namespace IctBaden.Modbus
         private void OnClientDisconnected(Socket client, string address)
         {
             Trace.TraceInformation("ModbusSlave: Client disconnected " + address);
-            connectedMasters.Remove(client);
+            _connectedMasters.Remove(client);
             Disconnected?.Invoke(address);
         }
 
@@ -182,8 +189,7 @@ namespace IctBaden.Modbus
 
             var traceLines = new StringBuilder();
 
-            traceLines.AppendLine(string.Format("[{0}:{1}] Command fn={2}, addr={3}, cnt={4}",
-              Port, Id, command.FunctionCode, command.Address, command.Count));
+            traceLines.AppendLine($"[{Port}:{Id}] Command fn={command.FunctionCode}, addr={command.Address}, cnt={command.Count}");
 
             //take the proper function command handler
             switch (command.FunctionCode)
@@ -193,7 +199,7 @@ namespace IctBaden.Modbus
                     for (var i = 0; i < command.Count; i++)
                     {
                         command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
@@ -204,7 +210,7 @@ namespace IctBaden.Modbus
                     for (var i = 0; i < command.Count; i++)
                     {
                         command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
@@ -212,7 +218,7 @@ namespace IctBaden.Modbus
 
                 case ModbusCommand.FuncWriteCoil:
                     DataAccess.WriteCoils(command.Offset, new[] { command.Data[0] != 0 });
-                    traceLines.AppendLine(string.Format("[{0}]={1} ", command.Offset, command.Data[0]));
+                    traceLines.AppendLine($"[{command.Offset}]={command.Data[0]} ");
                     break;
 
 
@@ -224,7 +230,7 @@ namespace IctBaden.Modbus
                         var mask = 1 << (i % 16);
                         var value = (command.Data[index] & mask) != 0;
                         boolList.Add(value);
-                        traceLines.Append(string.Format("[{0}]={1} ", index, value));
+                        traceLines.Append($"[{index}]={value} ");
                     }
                     DataAccess.WriteCoils(command.Offset, boolList.ToArray());
                     traceLines.AppendLine(string.Empty);
@@ -235,7 +241,7 @@ namespace IctBaden.Modbus
                     command.Data = DataAccess.ReadInputRegisters(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
@@ -245,7 +251,7 @@ namespace IctBaden.Modbus
                     command.Data = DataAccess.ReadHoldingRegisters(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
@@ -254,7 +260,7 @@ namespace IctBaden.Modbus
                     DataAccess.WriteRegisters(command.Offset, command.Data);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
@@ -263,7 +269,7 @@ namespace IctBaden.Modbus
                     DataAccess.WriteRegisters(command.Offset, command.Data);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        traceLines.Append(string.Format("[{0}]={1} ", command.Offset + i, command.Data[i]));
+                        traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
                     break;
