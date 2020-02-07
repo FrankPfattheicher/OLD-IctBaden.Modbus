@@ -63,11 +63,8 @@ namespace IctBaden.Modbus
         public void Start()
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            if (SystemInfo.Platform == Platform.Windows)
-            {
-                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-            }
             _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _listener.LingerState = new LingerOption(false, 0);
 
             _cancel = new CancellationTokenSource();
             _runner = new Task(RunnerDoWork, _cancel.Token);
@@ -142,11 +139,9 @@ namespace IctBaden.Modbus
             {
                 var ept = new IPEndPoint(IPAddress.Any, Port);
                 _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                if (SystemInfo.Platform == Platform.Windows)
-                {
-                    _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
-                }
                 _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                _listener.LingerState = new LingerOption(false, 0);
+
                 _listener.Bind(ept);
                 _listener.Listen(10);
             }

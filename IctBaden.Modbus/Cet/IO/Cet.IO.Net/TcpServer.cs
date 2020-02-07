@@ -113,14 +113,21 @@ namespace Cet.IO.Net
                             );
 
                         //try to decode the incoming data
-                        var data = new ServerCommData(Protocol)
-                        {
-                            IncomingData = writer.ToReader()
-                        };
+                        var data = new ServerCommData(this.Protocol);
+                        data.IncomingData = writer.ToReader();
 
-                        CommResponse result = Protocol
-                            .Codec
-                            .ServerDecode(data);
+                        CommResponse result;
+                        try
+                        {
+                            result = this.Protocol
+                                .Codec
+                                .ServerDecode(data);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                            result = new CommResponse(null, CommResponse.Ignore);
+                        }
 
                         if (result.Status == CommResponse.Ack)
                         {
@@ -133,7 +140,7 @@ namespace Cet.IO.Net
                                 .ServerEncode(data);
 
                             //return the resulting data to the remote caller
-                            byte[] outgoing = ((IByteArray)data.OutgoingData).Data;
+                            var outgoing = data.OutgoingData.ToByteArray();
                             if (Port.Connected)
                             { 
                                 try
@@ -158,6 +165,10 @@ namespace Cet.IO.Net
 
                     Thread.Sleep(0);
                 }
+            }
+            catch (ObjectDisposedException)
+            {
+                
             }
             finally
             {
