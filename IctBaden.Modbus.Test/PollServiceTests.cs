@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading;
 using System.Threading.Tasks;
+using IctBaden.Framework.AppUtils;
 using IctBaden.Framework.Tron;
 using Xunit;
 
@@ -10,6 +10,7 @@ namespace IctBaden.Modbus.Test
     [CollectionDefinition(nameof(PollServiceTests), DisableParallelization = true)]
     public class PollServiceTests : IDisposable
     {
+        private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
@@ -26,12 +27,14 @@ namespace IctBaden.Modbus.Test
 
             _source = new TestData();
 
-            _slave = new ModbusSlave("Test", _source, 502, 1);
+            _slave = new ModbusSlave("Test", _source, _port, 1);
             _slave.Start();
 
             _master = new ModbusMaster();
 
-            _client = _master.ConnectDevice("localhost", 502, 1);
+            _client = _master.ConnectDevice("localhost", _port, 1);
+            
+            AssertWait.Max(2000, () => _client.IsConnected);
         }
 
         public void Dispose()
@@ -76,7 +79,7 @@ namespace IctBaden.Modbus.Test
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Input, 0, 50);
             poll.Start(TimeSpan.FromSeconds(1), false);
 
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             Assert.True(poll.IsConnected);
         }
 
@@ -89,9 +92,9 @@ namespace IctBaden.Modbus.Test
             Assert.True(started);
             WaitForStableConnection(poll);
 
-            Thread.Sleep(TimeSpan.FromSeconds(0.5));
+            Task.Delay(TimeSpan.FromSeconds(0.5)).Wait();
             _processImageChanges = 0;
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
 
             Assert.True(_processImageChanges == 0);
         }
@@ -116,12 +119,12 @@ namespace IctBaden.Modbus.Test
             WaitForStableConnection(poll);
 
             // after half second - change data
-            Thread.Sleep(TimeSpan.FromSeconds(0.5));
+            Task.Delay(TimeSpan.FromSeconds(0.5)).Wait();
             _processImageChanges = 0;
             _source.WriteRegisters(0, new ushort[] { 0x55AA });
 
             // after one second - change should be reported
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
             Assert.Equal(1, _processImageChanges);
         }
 
@@ -134,12 +137,11 @@ namespace IctBaden.Modbus.Test
             WaitForStableConnection(poll);
 
             // after one second - terminate slave
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             _slave.Terminate();
 
-            // after two more seconds - service should not more be connected
-            Thread.Sleep(TimeSpan.FromSeconds(2));
-            Assert.False(poll.IsConnected);
+            // after three more seconds - service should not more be connected
+            AssertWait.Max(3000, () => !poll.IsConnected);
         }
 
         [Fact]
@@ -154,12 +156,12 @@ namespace IctBaden.Modbus.Test
             WaitForStableConnection(poll);
 
             // after one second - terminate slave
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            _slave.Terminate();
             _processImageChanges = 0;
             _inputChanges = 0;
             _pollFailed = 0;
-            _slave.Terminate();
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
 
             Assert.Equal(0, _processImageChanges);
             Assert.Equal(0, _inputChanges);
@@ -182,20 +184,20 @@ namespace IctBaden.Modbus.Test
             WaitForStableConnection(poll);
 
             // wait for poll connected
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            AssertWait.Max(1000, () => _connectionChanges > 0);
             _connectionChanges = 0;
 
             // after one second - terminate slave
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             _slave.Terminate();
+            AssertWait.Max(2000, () => _connectionChanges > 0);
 
             // after two more seconds - restart slave
-            Thread.Sleep(TimeSpan.FromSeconds(2));
-            Assert.Equal(1, _connectionChanges);
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
             _slave.Start();
 
             // after two more seconds - the poll service should have reconnected
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
             Assert.True(poll.IsConnected);
             Assert.Equal(2, _connectionChanges);
 
@@ -203,7 +205,7 @@ namespace IctBaden.Modbus.Test
             _processImageChanges = 0;
             _inputChanges = 0;
             _pollFailed = 0;
-            Thread.Sleep(TimeSpan.FromSeconds(1));
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
 
             Assert.Equal(0, _processImageChanges);
             Assert.Equal(0, _inputChanges);
@@ -212,11 +214,10 @@ namespace IctBaden.Modbus.Test
             // reconnected - now change image
             _source.WriteRegisters(0, new ushort[] { 0x55AA });
             // after one more second - there should be an event
-            Thread.Sleep(TimeSpan.FromSeconds(1));
-            Assert.Equal(1, _processImageChanges);
+            AssertWait.Max(2000, () => _processImageChanges > 0);
 
             // there should be no more connection changes
-            Assert.Equal(2, _connectionChanges);
+            AssertWait.Max(1000, () => _connectionChanges > 1);
         }
 
         [Fact]
@@ -235,26 +236,26 @@ namespace IctBaden.Modbus.Test
             WaitForStableConnection(poll);
 
             // wait for poll connected
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
             _connectionChanges = 0;
             _processImageChanges = 0;
             _inputChanges = 0;
             _pollFailed = 0;
 
             // after two seconds - terminate slave
-            Thread.Sleep(TimeSpan.FromSeconds(2));
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
             _slave.Terminate();
 
             // and change data
             _source.WriteRegisters(0, new ushort[] { 0x55AA });
 
             // after four more seconds - restart slave
-            Thread.Sleep(TimeSpan.FromSeconds(4));
+            Task.Delay(TimeSpan.FromSeconds(4)).Wait();
             Assert.Equal(1, _connectionChanges);
             _slave.Start();
 
             // after four more seconds - the poll service should have reconnected
-            Thread.Sleep(TimeSpan.FromSeconds(4));
+            Task.Delay(TimeSpan.FromSeconds(4)).Wait();
             Assert.True(poll.IsConnected);
             Assert.Equal(2, _connectionChanges);      // disconnected, connected
             Assert.Equal(1, _processImageChanges);    // one image

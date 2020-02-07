@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -9,6 +11,8 @@ using System.Threading.Tasks;
 using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
+using IctBaden.Framework.AppUtils;
+
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global
 // ReSharper disable MemberCanBePrivate.Global
@@ -59,7 +63,10 @@ namespace IctBaden.Modbus
         public void Start()
         {
             _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+            if (SystemInfo.Platform == Platform.Windows)
+            {
+                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+            }
             _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 
             _cancel = new CancellationTokenSource();
@@ -75,15 +82,22 @@ namespace IctBaden.Modbus
 
             try
             {
-                foreach (var client in _connectedMasters)
+                var connected = _connectedMasters
+                    .Where(cm => cm.Connected)
+                    .ToArray();
+                foreach (var client in connected)
                 {
-                    if (client.Connected)
+                    try
                     {
                         var disconnect = new SocketAsyncEventArgs()
                         {
                             DisconnectReuseSocket = true
                         };
                         client.DisconnectAsync(disconnect);
+                    }
+                    catch
+                    {
+                        // ignore
                     }
                 }
             }
@@ -94,6 +108,12 @@ namespace IctBaden.Modbus
             }
             try
             {
+                for(var w = 0; w < 10; w++)
+                {
+                    if (!_connectedMasters.ToArray().Any()) break;
+                    Task.Delay(100).Wait();
+                }
+
                 _cancel.Cancel();
                 _runner.Wait();
                 _runner.Dispose();
@@ -115,13 +135,23 @@ namespace IctBaden.Modbus
             {
                 var ept = new IPEndPoint(IPAddress.Any, Port);
                 _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+                if (SystemInfo.Platform == Platform.Windows)
+                {
+                    _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.DontLinger, true);
+                }
                 _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _listener.Bind(ept);
                 _listener.Listen(10);
             }
             catch (Exception ex)
             {
+                if (ex is Win32Exception native)
+                {
+                    if (native.NativeErrorCode == 13 && SystemInfo.Platform == Platform.Linux && Port < 1024)
+                    {
+                        Trace.TraceError("Ports below 1024 are considered 'privileged' and can only be bound to with an equally privileged user (read: root).");
+                    }
+                }
                 Debug.WriteLine(ex.Message);
                 return;
             }

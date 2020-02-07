@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 using System.Net.Sockets;
-
+using System.Threading.Tasks;
 using Cet.IO.Protocols;
 
 /*
@@ -39,7 +39,7 @@ namespace Cet.IO.Net
         public readonly Socket Port;
         public readonly IProtocol Protocol;
 
-        private Thread _thread;
+        private Task _task;
         protected bool _closing;
 
 
@@ -57,8 +57,8 @@ namespace Cet.IO.Net
             //marks the server running
             this.IsRunning = true;
 
-            this._thread = new Thread(this.Worker);
-            this._thread.Start();
+            this._task = new Task(this.Worker);
+            this._task.Start();
         }
 
 
@@ -75,10 +75,9 @@ namespace Cet.IO.Net
         {
             this._closing = true;
 
-            if (this._thread != null &&
-                this._thread.IsAlive)
+            if (this._task != null && !this._task.IsCompleted)
             {
-                this._thread.Join();
+                this._task.Wait();
             }
         }
 

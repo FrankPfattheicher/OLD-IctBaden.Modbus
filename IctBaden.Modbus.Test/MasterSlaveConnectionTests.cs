@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
+using IctBaden.Framework.AppUtils;
 using IctBaden.Framework.Tron;
 using Xunit;
 
@@ -8,6 +10,7 @@ namespace IctBaden.Modbus.Test
     [CollectionDefinition(nameof(MasterSlaveConnectionTests), DisableParallelization = true)]
     public class MasterSlaveConnectionTests : IDisposable
     {
+        private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
@@ -16,7 +19,6 @@ namespace IctBaden.Modbus.Test
         public MasterSlaveConnectionTests()
         {
             Trace.Listeners.Add(new TronTraceListener(true));
-
             _source = new TestData();
         }
 
@@ -35,19 +37,32 @@ namespace IctBaden.Modbus.Test
             }
         }
 
+        private bool WaitFor(Func<bool> condition, int milliseconds)
+        {
+            while (milliseconds > 0)
+            {
+                if (condition()) return true;
+                Task.Delay(100).Wait();
+                milliseconds -= 100;
+            }
+            return false;
+        }
+
         private void ConnectMasterAndSlave()
         {
-            _slave = new ModbusSlave("Test", _source, 502, 1);
+            _slave = new ModbusSlave("Test", _source, _port, 1);
             _slave.Start();
 
             _master = new ModbusMaster();
-            _client = _master.ConnectDevice("localhost", 502, 1);
+            _client = _master.ConnectDevice("localhost", _port, 1);
+
+            Assert.True(WaitFor(() => _client.IsConnected, 2000));
         }
 
         [Fact]
         public void CreateSlaveShouldSucceed()
         {
-            _slave = new ModbusSlave("Test", _source, 502, 1);
+            _slave = new ModbusSlave("Test", _source, _port, 1);
             Assert.NotNull(_slave);
             _slave.Start();
         }
@@ -62,14 +77,14 @@ namespace IctBaden.Modbus.Test
         [Fact]
         public void MasterAndSlaveConnection()
         {
-            _slave = new ModbusSlave("Test", _source, 502, 1);
+            _slave = new ModbusSlave("Test", _source, _port, 1);
             Assert.NotNull(_slave);
             _slave.Start();
 
             _master = new ModbusMaster();
             Assert.NotNull(_master);
 
-            var data2 = _master.ConnectDevice("localhost", 502, 1);
+            var data2 = _master.ConnectDevice("localhost", _port, 1);
             Assert.NotNull(data2);
         }
 
