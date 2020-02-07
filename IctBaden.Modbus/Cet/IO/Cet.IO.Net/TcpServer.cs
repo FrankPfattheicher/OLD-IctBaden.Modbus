@@ -21,6 +21,7 @@ using Cet.IO.Protocols;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
 namespace Cet.IO.Net
 {
     /// <summary>
@@ -56,9 +57,9 @@ namespace Cet.IO.Net
             try
             {
                 //start the local timer, which gets the session dying
-                int counter = IdleTimeout;
-                this.Port.ReceiveTimeout = 1000;
-                int grace = 0;
+                var counter = IdleTimeout;
+                Port.ReceiveTimeout = 1000;
+                var grace = 0;
 
                 //create a writer for the incoming data
                 ByteArrayWriter writer = null;
@@ -66,7 +67,7 @@ namespace Cet.IO.Net
 
                 //loop, until the host closes, or the timer expires
                 while (
-                    this._closing == false &&
+                    _closing == false &&
                     counter-- > 0)
                 {
                     if (--grace == 0)
@@ -78,13 +79,17 @@ namespace Cet.IO.Net
                     try
                     {
                         //read the data from the physical port
-                        length = this.Port.Receive(
+                        length = Port.Receive(
                             buffer,
                             SocketFlags.None);
 
                         //check whether the remote has closed
                         if (length == 0)
                             break;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        break;
                     }
                     catch (SocketException ex)
                     {
@@ -108,20 +113,22 @@ namespace Cet.IO.Net
                             );
 
                         //try to decode the incoming data
-                        var data = new ServerCommData(this.Protocol);
-                        data.IncomingData = writer.ToReader();
+                        var data = new ServerCommData(Protocol)
+                        {
+                            IncomingData = writer.ToReader()
+                        };
 
-                        CommResponse result = this.Protocol
+                        CommResponse result = Protocol
                             .Codec
                             .ServerDecode(data);
 
                         if (result.Status == CommResponse.Ack)
                         {
                             //the command is recognized, so call the host back
-                            this.OnServeCommand(data);
+                            OnServeCommand(data);
 
                             //encode the host data
-                            this.Protocol
+                            Protocol
                                 .Codec
                                 .ServerEncode(data);
 
@@ -135,7 +142,7 @@ namespace Cet.IO.Net
                                 }
                                 catch (Exception ex)
                                 {
-                                  System.Diagnostics.Trace.TraceError(ex.Message);
+                                  Trace.TraceError(ex.Message);
                                 }
                             }
 
@@ -155,7 +162,7 @@ namespace Cet.IO.Net
             finally
             {
                 //ensure the local socket disposal
-                this.Port.Close();
+                Port.Close();
             }
 
 #if NET45
@@ -165,13 +172,8 @@ namespace Cet.IO.Net
 #endif
 
             //marks the server not running
-            this.IsRunning = false;
-
-            var disconnectedHandler = Disconnected;
-            if (disconnectedHandler != null)
-            {
-              disconnectedHandler();
-            }
+            IsRunning = false;
+            Disconnected?.Invoke();
         }
 
     }

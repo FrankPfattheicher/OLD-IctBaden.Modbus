@@ -7,7 +7,6 @@ using Xunit;
 
 namespace IctBaden.Modbus.Test
 {
-    [CollectionDefinition(nameof(PollServiceTests), DisableParallelization = true)]
     public class PollServiceTests : IDisposable
     {
         private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
@@ -33,8 +32,6 @@ namespace IctBaden.Modbus.Test
             _master = new ModbusMaster();
 
             _client = _master.ConnectDevice("localhost", _port, 1);
-            
-            AssertWait.Max(2000, () => _client.IsConnected);
         }
 
         public void Dispose()
@@ -62,6 +59,8 @@ namespace IctBaden.Modbus.Test
                 _slave.Terminate();
                 _slave = null;
             }
+
+            Task.Delay(1000).Wait();
         }
 
         [Fact]
@@ -118,14 +117,13 @@ namespace IctBaden.Modbus.Test
             Assert.True(started);
             WaitForStableConnection(poll);
 
-            // after half second - change data
-            Task.Delay(TimeSpan.FromSeconds(0.5)).Wait();
+            // after a second - change data
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             _processImageChanges = 0;
             _source.WriteRegisters(0, new ushort[] { 0x55AA });
 
             // after one second - change should be reported
-            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-            Assert.Equal(1, _processImageChanges);
+            AssertWait.Max(2000, () => _processImageChanges > 0);
         }
 
         [Fact]
@@ -140,8 +138,9 @@ namespace IctBaden.Modbus.Test
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             _slave.Terminate();
 
-            // after three more seconds - service should not more be connected
-            AssertWait.Max(3000, () => !poll.IsConnected);
+            // after two more seconds - service should not more be connected
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+            AssertWait.Max(2000, () => !poll.IsConnected);
         }
 
         [Fact]
@@ -157,15 +156,14 @@ namespace IctBaden.Modbus.Test
 
             // after one second - terminate slave
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-            _slave.Terminate();
             _processImageChanges = 0;
             _inputChanges = 0;
             _pollFailed = 0;
-            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+            _slave.Terminate();
+            AssertWait.Max(3000, () => _pollFailed > 0);
 
             Assert.Equal(0, _processImageChanges);
             Assert.Equal(0, _inputChanges);
-            Assert.True(_pollFailed > 0, "pollFailed is zero");
         }
 
         [Fact]
@@ -249,9 +247,11 @@ namespace IctBaden.Modbus.Test
             // and change data
             _source.WriteRegisters(0, new ushort[] { 0x55AA });
 
-            // after four more seconds - restart slave
+            // after four more seconds - expect connection change
             Task.Delay(TimeSpan.FromSeconds(4)).Wait();
-            Assert.Equal(1, _connectionChanges);
+            AssertWait.Max(4000, () => _connectionChanges > 0);
+            
+            // restart slave
             _slave.Start();
 
             // after four more seconds - the poll service should have reconnected

@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using IctBaden.Framework.AppUtils;
 using IctBaden.Framework.Tron;
 using Xunit;
 
+[assembly: CollectionBehavior(CollectionBehavior.CollectionPerAssembly)]
+
 namespace IctBaden.Modbus.Test
 {
-    [CollectionDefinition(nameof(MasterSlaveConnectionTests), DisableParallelization = true)]
     public class MasterSlaveConnectionTests : IDisposable
     {
         private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
@@ -37,17 +37,6 @@ namespace IctBaden.Modbus.Test
             }
         }
 
-        private bool WaitFor(Func<bool> condition, int milliseconds)
-        {
-            while (milliseconds > 0)
-            {
-                if (condition()) return true;
-                Task.Delay(100).Wait();
-                milliseconds -= 100;
-            }
-            return false;
-        }
-
         private void ConnectMasterAndSlave()
         {
             _slave = new ModbusSlave("Test", _source, _port, 1);
@@ -56,7 +45,7 @@ namespace IctBaden.Modbus.Test
             _master = new ModbusMaster();
             _client = _master.ConnectDevice("localhost", _port, 1);
 
-            Assert.True(WaitFor(() => _client.IsConnected, 2000));
+            AssertWait.Max(2000,() => _client.IsConnected);
         }
 
         [Fact]

@@ -11,7 +11,7 @@ namespace IctBaden.Modbus
 {
     public class ConnectedSlave : IDataAccess, IDisposable
     {
-        private Socket socketConnection;
+        private Socket _socketConnection;
         public ICommClient CommClient { get; private set; }
 
         public ModbusMaster Master { get; }
@@ -19,14 +19,14 @@ namespace IctBaden.Modbus
         public ushort Port { get; }
         public byte Id { get; }
 
-        private readonly ModbusClient client;
-        private bool reconnecting;
+        private readonly ModbusClient _client;
+        private bool _reconnecting;
 
         public ConnectedSlave(ModbusMaster master, Socket connection, byte id)
         {
             Master = master;
-            socketConnection = connection;
-            CommClient = socketConnection.GetClient();
+            _socketConnection = connection;
+            CommClient = _socketConnection.GetClient();
             if (connection.RemoteEndPoint is IPEndPoint ipEndPoint)
             {
                 Address = ipEndPoint.Address;
@@ -38,7 +38,7 @@ namespace IctBaden.Modbus
             }
             Id = id;
             var codec = new ModbusTcpCodec();
-            client = new ModbusClient(codec) { Address = Id };
+            _client = new ModbusClient(codec) { Address = Id };
         }
 
         public override string ToString()
@@ -51,19 +51,19 @@ namespace IctBaden.Modbus
             Disconnect();
         }
 
-        public bool IsConnected => (socketConnection != null) && socketConnection.Connected;
+        public bool IsConnected => (_socketConnection != null) && _socketConnection.Connected;
 
         public void ReConnect()
         {
-            if (reconnecting) return;
+            if (_reconnecting) return;
 
             Disconnect();
 
             try
             {
-                reconnecting = true;
-                socketConnection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-                socketConnection.BeginConnect(Address, Port, RequestCallback, socketConnection);
+                _reconnecting = true;
+                _socketConnection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                _socketConnection.BeginConnect(Address, Port, RequestCallback, _socketConnection);
             }
             catch (Exception ex)
             {
@@ -85,37 +85,45 @@ namespace IctBaden.Modbus
 
             if (!ar.IsCompleted) return;
             CommClient = socket.GetClient();
-            reconnecting = false;
+            _reconnecting = false;
         }
 
         public void Disconnect()
         {
-            if (socketConnection == null) return;
+            if (_socketConnection == null) return;
 
             try
             {
-                if (socketConnection.IsBound)
+                if (_socketConnection.IsBound)
                 {
-                    //socketConnection.Disconnect(true);
+                    _socketConnection.Shutdown(SocketShutdown.Both);
+                    var disconnect = new SocketAsyncEventArgs()
+                    {
+                        DisconnectReuseSocket = true
+                    };
+                    _socketConnection.DisconnectAsync(disconnect);
                 }
-                socketConnection.Close();
-                socketConnection.Dispose();
             }
             catch (Exception ex)
             {
                 Trace.TraceWarning("ConnectedSlave.Disconnect: " + ex.Message);
             }
-            socketConnection = null;
+            finally
+            {
+                _socketConnection?.Close();
+                _socketConnection?.Dispose();
+            }
+            _socketConnection = null;
         }
 
         private ModbusCommand Execute(ModbusCommand command)
         {
-            if (socketConnection == null)
+            if (_socketConnection == null)
             {
                 Trace.TraceWarning("ConnectedSlave.Execute: No connection to slave.");
                 return null;
             }
-            if (!socketConnection.Connected)
+            if (!_socketConnection.Connected)
             {
                 Trace.TraceWarning("ConnectedSlave.Execute: Reconnect to slave.");
                 try
@@ -127,10 +135,10 @@ namespace IctBaden.Modbus
                     Trace.TraceError("ConnectedSlave:Execute: Connect failed: " + ex.Message);
                 }
                 
-                if (!socketConnection.Connected)
+                if (!_socketConnection.Connected)
                     return null;
             }
-            var response = client.ExecuteGeneric(CommClient, command);
+            var response = _client.ExecuteGeneric(CommClient, command);
             if (response.Status == CommResponse.Ack)
             {
                 return response.Data.UserData as ModbusCommand;

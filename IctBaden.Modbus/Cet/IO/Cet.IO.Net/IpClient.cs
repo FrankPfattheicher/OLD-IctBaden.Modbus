@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Net.Sockets;
+// ReSharper disable ConvertToUsingDeclaration
 
 /*
  * Copyright 2012, 2013 by Mario Vernari, Cet Electronics
@@ -19,6 +20,7 @@ using System.Net.Sockets;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
 namespace Cet.IO.Net
 {
     /// <summary>
@@ -29,7 +31,7 @@ namespace Cet.IO.Net
     {
         public IpClient(Socket port)
         {
-            this.Port = port;
+            Port = port;
         }
 
 
@@ -45,7 +47,7 @@ namespace Cet.IO.Net
         /// <returns></returns>
         public CommResponse Query(ClientCommData data)
         {
-            lock (this.Port)
+            lock (Port)
             {
                 //convert the request data as an ordinary byte array
                 byte[] outgoing = ((IByteArray)data.OutgoingData).Data;
@@ -59,7 +61,7 @@ namespace Cet.IO.Net
                 //retries loop
                 for (int attempt = 0, retries = data.Retries; attempt < retries; attempt++)
                 {
-                    //phyiscal writing
+                    //physical writing
                     if (Port.Connected)
                     {
                       try
@@ -68,7 +70,7 @@ namespace Cet.IO.Net
                       }
                       catch (Exception ex)
                       {
-                        System.Diagnostics.Trace.TraceError(ex.Message);
+                        Trace.TraceError(ex.Message);
                         return new CommResponse(data, CommResponse.Critical);
                       }
                     }
@@ -77,9 +79,10 @@ namespace Cet.IO.Net
 
                     //start the local timer
                     bool timeoutExpired;
-                    int totalTimeout = this.Latency + data.Timeout;
+                    var totalTimeout = Latency + data.Timeout;
 
-                    using (Timer timer = new Timer(
+                    // ReSharper disable once UnusedVariable
+                    using (var timer = new Timer(
                         _ => timeoutExpired = true,
                         state: null,
                         dueTime: totalTimeout,
@@ -89,10 +92,10 @@ namespace Cet.IO.Net
                         timeoutExpired = false;
                         while (timeoutExpired == false)
                         {
-                            var length = 0;
+                            int length;
                             try
                             {
-                                length = this.Port.Available;
+                                length = Port.Available;
                             }
                             catch (Exception ex)
                             {
@@ -106,7 +109,7 @@ namespace Cet.IO.Net
                                     length = tempSize;
 
                                 //read the incoming data from the physical port
-                                this.Port.Receive(temp, length, SocketFlags.None);
+                                Port.Receive(temp, length, SocketFlags.None);
 
                                 //append data to the writer
                                 incoming.WriteBytes(
@@ -144,7 +147,7 @@ namespace Cet.IO.Net
                     }   //using (timer)
                 }       //for
 
-                System.Diagnostics.Trace.TraceError("IpClient:Query: no attempt was successful");
+                Trace.TraceError("IpClient:Query: no attempt was successful");
                 return new CommResponse(
                     data,
                     CommResponse.Critical);

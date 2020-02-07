@@ -89,15 +89,21 @@ namespace IctBaden.Modbus
                 {
                     try
                     {
+                        client.Shutdown(SocketShutdown.Both);
                         var disconnect = new SocketAsyncEventArgs()
                         {
                             DisconnectReuseSocket = true
                         };
                         client.DisconnectAsync(disconnect);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        // ignore
+                        Debug.WriteLine(ex.Message);
+                    }
+                    finally
+                    {
+                        client?.Close();
+                        client?.Dispose();
                     }
                 }
             }
@@ -118,9 +124,10 @@ namespace IctBaden.Modbus
                 _runner.Wait();
                 _runner.Dispose();
 
-                _listener.Close();
-                _listener.Dispose();
+                var listener = _listener;
                 _listener = null;
+                listener.Close();
+                listener.Dispose();
             }
             catch (Exception ex)
             {
@@ -178,13 +185,14 @@ namespace IctBaden.Modbus
         private void AcceptClient(IAsyncResult ar)
         {
             _clientAccepted.Set();
-            if (_listener == null)
-                return;
 
             try
             {
-                var client = _listener.EndAccept(ar);
-                var address = client.RemoteEndPoint.ToString();
+                var client = _listener?.EndAccept(ar);
+                var address = client?.RemoteEndPoint.ToString();
+
+                if (address == null)
+                    return;
 
                 Trace.TraceInformation("ModbusSlave: Client connected " + address);
                 _connectedMasters.Add(client);

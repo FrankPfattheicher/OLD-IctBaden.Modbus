@@ -5,6 +5,7 @@
  */
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
+// ReSharper disable UnusedMember.Global
 namespace IctBaden.Modbus
 {
     using System;
@@ -94,11 +95,19 @@ namespace IctBaden.Modbus
             {
                 foreach (var dev in ConnectedSlaveDevices)
                 {
-                    dev.Disconnect();
-                    dev.Dispose();
+                    try
+                    {
+                        dev.Disconnect();
+                        dev.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError("ModbusMaster: Could not disconnect slave" + Environment.NewLine + ex.Message);
+                    }
                 }
                 ConnectedSlaveDevices.Clear();
             }
         }
+
     }
 }
