@@ -3,6 +3,7 @@ using System.Threading;
 using System;
 using System.Net;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 
@@ -64,7 +65,7 @@ namespace Cet.IO.Net
             for (int attempt = 0, retries = data.Retries; attempt < retries; attempt++)
             {
                 //physical writing
-                this.Send(outgoing);
+                Send(outgoing);
 
                 //create a writer for accumulate the incoming data
                 var incoming = new ByteArrayWriter();
@@ -100,7 +101,7 @@ namespace Cet.IO.Net
 
             } //for
 
-            System.Diagnostics.Trace.TraceError("SocketClient:Query: no attempt was successful");
+            Trace.TraceError("SocketClient:Query: no attempt was successful");
             return new CommResponse(
                 data,
                 CommResponse.Critical);
@@ -189,7 +190,7 @@ namespace Cet.IO.Net
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Trace.TraceError(ex.Message);
+                    Trace.TraceError(ex.Message);
                     LastError = ex.Message;
                     return false;
                 }
@@ -253,7 +254,7 @@ namespace Cet.IO.Net
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Trace.TraceError(ex.Message);
+                    Trace.TraceError(ex.Message);
                     LastError = ex.Message;
                     return buffer;
                 }

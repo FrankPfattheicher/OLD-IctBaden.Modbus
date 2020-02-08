@@ -18,6 +18,7 @@ using Cet.IO.Protocols;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
 namespace Cet.IO
 {
     /// <summary>
@@ -33,7 +34,7 @@ namespace Cet.IO
 
 
         /// <summary>
-        /// Default timeout for the current query
+        /// [ms] Default timeout for the current query
         /// </summary>
         public int Timeout = 1000;  //ms
 

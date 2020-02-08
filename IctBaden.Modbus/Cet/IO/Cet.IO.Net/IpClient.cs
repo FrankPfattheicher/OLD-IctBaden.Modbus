@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Net.Sockets;
+using IctBaden.Framework.Timer;
+
 // ReSharper disable ConvertToUsingDeclaration
 
 /*
@@ -55,7 +57,7 @@ namespace Cet.IO.Net
                 //create a writer for accumulate the incoming data
                 var incoming = new ByteArrayWriter();
 
-                const int tempSize = 64;
+                const int tempSize = 1024;
                 var temp = new byte[tempSize];
 
                 //retries loop
@@ -64,95 +66,84 @@ namespace Cet.IO.Net
                     //physical writing
                     if (Port.Connected)
                     {
-                      try
-                      {
-                        Port.Send(outgoing);
-                      }
-                      catch (Exception ex)
-                      {
-                        Trace.TraceError(ex.Message);
-                        return new CommResponse(data, CommResponse.Critical);
-                      }
+                        try
+                        {
+                            Port.Send(outgoing);
+                        }
+                        catch (Exception ex)
+                        {
+                            Trace.TraceError(ex.Message);
+                            return new CommResponse(data, CommResponse.Critical);
+                        }
                     }
 
                     incoming.Drop();
 
                     //start the local timer
-                    bool timeoutExpired;
-                    var totalTimeout = Latency + data.Timeout;
-
-                    // ReSharper disable once UnusedVariable
-                    using (var timer = new Timer(
-                        _ => timeoutExpired = true,
-                        state: null,
-                        dueTime: totalTimeout,
-                        period: Timeout.Infinite))
+                    var timeout = new PassiveTimer(Latency + data.Timeout);
+                    //reception loop, until a valid response or timeout
+                    while (!timeout.Timeout)
                     {
-                        //reception loop, until a valid response or timeout
-                        timeoutExpired = false;
-                        while (timeoutExpired == false)
+                        int length;
+                        try
                         {
-                            int length;
-                            try
-                            {
-                                length = Port.Available;
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.WriteLine(ex.Message);
-                                length = 0;
-                            }
-
-                            if (length > 0)
-                            {
-                                if (length > tempSize)
-                                    length = tempSize;
-
-                                //read the incoming data from the physical port
-                                Port.Receive(temp, length, SocketFlags.None);
-
-                                //append data to the writer
-                                incoming.WriteBytes(
-                                    temp,
-                                    0,
-                                    length);
-
-                                //try to decode the stream
-                                data.IncomingData = incoming.ToReader();
-
-                                CommResponse result = data
-                                    .OwnerProtocol
-                                    .Codec
-                                    .ClientDecode(data);
-
-                                //exit whether any concrete result: either good or bad
-                                if (result.Status == CommResponse.Ack)
-                                {
-                                    return result;
-                                }
-                                else if (result.Status == CommResponse.Critical)
-                                {
-                                    return result;
-                                }
-                                else if (result.Status != CommResponse.Unknown)
-                                {
-                                    break;
-                                }
-                            }
-
-                            Thread.Sleep(0);
-
-                            //TODO: stop immediately if the host asked to abort
+                            length = Port.Available;
                         }
-                    }   //using (timer)
-                }       //for
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex.Message);
+                            length = 0;
+                        }
+
+                        if (length > 0)
+                        {
+                            if (length > tempSize)
+                            {
+                                Trace.TraceWarning("IpClient.Query: Receive length exceeds expected size.");
+                                length = tempSize;
+                            }
+
+                            //read the incoming data from the physical port
+                            Port.Receive(temp, length, SocketFlags.None);
+
+                            //append data to the writer
+                            incoming.WriteBytes(
+                                temp,
+                                0,
+                                length);
+
+                            //try to decode the stream
+                            data.IncomingData = incoming.ToReader();
+
+                            var result = data
+                                .OwnerProtocol
+                                .Codec
+                                .ClientDecode(data);
+
+                            //exit whether any concrete result: either good or bad
+                            if (result.Status == CommResponse.Ack)
+                            {
+                                return result;
+                            }
+                            else if (result.Status == CommResponse.Critical)
+                            {
+                                return result;
+                            }
+                            else if (result.Status != CommResponse.Unknown)
+                            {
+                                break;
+                            }
+                        }
+
+                        Thread.Sleep(0);
+
+                        //TODO: stop immediately if the host asked to abort
+                    }
+                } //for
 
                 Trace.TraceError("IpClient:Query: no attempt was successful");
-                return new CommResponse(
-                    data,
-                    CommResponse.Critical);
-            }   //lock
+                return new CommResponse(data, CommResponse.Critical);
+            } //lock
         }
-
     }
 }

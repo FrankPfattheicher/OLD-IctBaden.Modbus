@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
+// ReSharper disable MemberCanBePrivate.Global
 
 namespace IctBaden.Modbus
 {

@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 
 /*
  * Copyright 2012, 2013 by Mario Vernari, Cet Electronics
@@ -16,6 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 namespace Cet.IO.Protocols
 {
     /// <summary>
@@ -26,9 +28,8 @@ namespace Cet.IO.Protocols
     {
         public ModbusClient(IProtocolCodec codec)
         {
-            this.Codec = codec;
+            Codec = codec;
         }
-
 
         /// <summary>
         /// The reference to the codec to be used
@@ -48,16 +49,15 @@ namespace Cet.IO.Protocols
         /// <param name="port">The client port for the transport</param>
         /// <param name="command">The command to be submitted</param>
         /// <returns>The result of the query</returns>
-        public CommResponse ExecuteGeneric(
-            ICommClient port,
-            ModbusCommand command)
+        public CommResponse ExecuteGeneric(ICommClient port, ModbusCommand command)
         {
-            var data = new ClientCommData(this);
-            data.UserData = command;
-            this.Codec.ClientEncode(data);
+            var data = new ClientCommData(this)
+            {
+                UserData = command
+            };
+            Codec.ClientEncode(data);
 
-            return port
-                .Query(data);
+            return port.Query(data);
         }
 
     }

@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Cet.IO.Protocols;
@@ -89,13 +91,13 @@ namespace Cet.IO.Net
 
         protected virtual void OnServeCommand(ServerCommData data)
         {
-            var handler = this.ServeCommand;
-
-            if (handler != null)
+            try
             {
-                handler(
-                    this,
-                    new ServeCommandEventArgs(data));
+                ServeCommand?.Invoke(this, new ServeCommandEventArgs(data));
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("OnServeCommand: " + ex.Message);
             }
         }
 

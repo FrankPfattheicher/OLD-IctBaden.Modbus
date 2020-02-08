@@ -24,10 +24,10 @@ namespace IctBaden.Modbus
     /// A Modbus Slave is a TCP server
     /// waiting for a Master's connection and commands. 
     /// </summary>
-    public class ModbusSlave
+    public class ModbusSlave : IDisposable
     {
-        private Socket _listener;
-
+        private readonly IPEndPoint _ipEndPoint;
+        private readonly Socket _listener;
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
 
@@ -51,15 +51,44 @@ namespace IctBaden.Modbus
             Id = id;
 
             _connectedMasters = new List<Socket>();
+            
+            _ipEndPoint = new IPEndPoint(IPAddress.Any, Port);
+            _listener = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            _listener.LingerState = new LingerOption(false, 0);
+        }
+
+        public void Dispose()
+        {
+            _listener?.Dispose();
         }
 
         public void Start()
         {
-            _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _listener.LingerState = new LingerOption(false, 0);
+            try
+            {
+                Trace.TraceInformation("*1");
+                _listener.Bind(_ipEndPoint);
+                Trace.TraceInformation("*2");
+                _listener.Listen(10);
+                Trace.TraceInformation("*3");
 
-            StartListener();
+                _listener.BeginAccept(AcceptClient, _listener);
+                Trace.TraceInformation($"*4 IsBound = {_listener.IsBound}");
+            }
+            catch (Exception ex)
+            {
+                if (ex is Win32Exception native)
+                {
+                    if (native.NativeErrorCode == 13 && SystemInfo.Platform == Platform.Linux && Port < 1024)
+                    {
+                        Trace.TraceError("Ports below 1024 are considered 'privileged' and can only be bound to with an equally privileged user (read: root).");
+                    }
+                }
+                Trace.TraceError("ModbusSlave: " + ex.Message);
+                _listener?.Close();
+                _listener?.Dispose();
+            }
                 
             Trace.TraceInformation("ModbusSlave: Started {0,5}:{1}  {2}", Port, Id, Name);
         }
@@ -70,6 +99,10 @@ namespace IctBaden.Modbus
 
             try
             {
+                _listener.Shutdown(SocketShutdown.Both);
+                _listener.Dispose();
+                
+                
                 var connected = _connectedMasters
                     .Where(cm => cm.Connected)
                     .ToArray();
@@ -107,11 +140,6 @@ namespace IctBaden.Modbus
                     if (!_connectedMasters.ToArray().Any()) break;
                     Task.Delay(100).Wait();
                 }
-
-                var listener = _listener;
-                _listener = null;
-                listener.Close();
-                listener.Dispose();
             }
             catch (Exception ex)
             {
@@ -120,41 +148,19 @@ namespace IctBaden.Modbus
             }
         }
 
-        private void StartListener()
-        {
-            try
-            {
-                var ept = new IPEndPoint(IPAddress.Any, Port);
-                _listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                _listener.LingerState = new LingerOption(false, 0);
-
-                _listener.Bind(ept);
-                _listener.Listen(10);
-                
-                _listener.BeginAccept(AcceptClient, _listener);
-            }
-            catch (Exception ex)
-            {
-                if (ex is Win32Exception native)
-                {
-                    if (native.NativeErrorCode == 13 && SystemInfo.Platform == Platform.Linux && Port < 1024)
-                    {
-                        Trace.TraceError("Ports below 1024 are considered 'privileged' and can only be bound to with an equally privileged user (read: root).");
-                    }
-                }
-                Trace.TraceError("ModbusSlave: " + ex.Message);
-            }
-        }
-
         private void AcceptClient(IAsyncResult ar)
         {
+            Trace.TraceInformation("~1");
             if (!(ar.AsyncState is Socket listener)) return;
+            Trace.TraceInformation("~2");
 
             try
             {
+                Trace.TraceInformation("#1");
                 var client = listener.EndAccept(ar);
+                Trace.TraceInformation("#2");
                 var address = client?.RemoteEndPoint.ToString();
+                Trace.TraceInformation("#3");
 
                 if (address != null)
                 {
@@ -166,16 +172,17 @@ namespace IctBaden.Modbus
                     var codec = new ModbusTcpCodec();
                     var server = new ModbusServer(codec) {Address = Id};
                     var host = new TcpServer(client, server) {IdleTimeout = 60};
+                    Trace.TraceInformation("#4");
                     host.ServeCommand += ListenerServeCommand;
                     host.Start();
                     host.Disconnected += () => OnClientDisconnected(client, address);
                 }
 
-                listener?.BeginAccept(AcceptClient, listener);
+                listener.BeginAccept(AcceptClient, listener);
             }
             catch (ObjectDisposedException)
             {
-                // terminated
+                // listener terminated
             }
             catch (Exception ex)
             {
@@ -192,6 +199,7 @@ namespace IctBaden.Modbus
 
         void ListenerServeCommand(object sender, ServeCommandEventArgs e)
         {
+            Trace.TraceInformation("ListenerServeCommand");
             LastAccess = DateTime.Now;
 
             var command = (ModbusCommand)e.Data.UserData;

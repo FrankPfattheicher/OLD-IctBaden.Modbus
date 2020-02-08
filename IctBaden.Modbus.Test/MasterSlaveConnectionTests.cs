@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using IctBaden.Framework.AppUtils;
 using IctBaden.Framework.Tron;
 using Xunit;
@@ -37,17 +38,6 @@ namespace IctBaden.Modbus.Test
             }
         }
 
-        private void ConnectMasterAndSlave()
-        {
-            _slave = new ModbusSlave("Test", _source, _port, 1);
-            _slave.Start();
-
-            _master = new ModbusMaster();
-            _client = _master.ConnectDevice("localhost", _port, 1);
-
-            AssertWait.Max(2000,() => _client.IsConnected);
-        }
-
         [Fact]
         public void CreateSlaveShouldSucceed()
         {
@@ -64,7 +54,7 @@ namespace IctBaden.Modbus.Test
         }
 
         [Fact]
-        public void MasterAndSlaveConnection()
+        public void MasterShouldBeAbleToConnectSlave()
         {
             _slave = new ModbusSlave("Test", _source, _port, 1);
             Assert.NotNull(_slave);
@@ -73,10 +63,33 @@ namespace IctBaden.Modbus.Test
             _master = new ModbusMaster();
             Assert.NotNull(_master);
 
-            var data2 = _master.ConnectDevice("localhost", _port, 1);
-            Assert.NotNull(data2);
+            var device = _master.ConnectDevice("localhost", _port, 1);
+            Assert.NotNull(device);
+            Assert.True(device.IsConnected);
+            Assert.True(_master.ConnectedSlaveDevices.First() == device);
+
+            device.Dispose();
         }
 
+        private void ConnectMasterAndSlave()
+        {
+            _slave = new ModbusSlave("Test", _source, _port, 1);
+            _slave.Start();
+
+            _master = new ModbusMaster();
+            _client = _master.ConnectDevice("localhost", _port, 1);
+
+            AssertWait.Max(2000,() => _client.IsConnected);
+        }
+
+        [Fact]
+        public void AfterConnectingDeviceMasterShouldHaveItInList()
+        {
+            ConnectMasterAndSlave();
+            
+            Assert.True(_master.ConnectedSlaveDevices.First() == _client);
+        }
+        
         [Fact]
         public void ReadDiscreteInput()
         {
@@ -112,16 +125,16 @@ namespace IctBaden.Modbus.Test
         {
             ConnectMasterAndSlave();
 
-            var result = _client.ReadCoils(7, 1);
-            Assert.False(result[0]);
+            var result1 = _client.ReadCoils(7, 1);
+            Assert.False(result1[0]);
 
             _source.WriteCoils(7, new[] { true });
-            result = _client.ReadCoils(7, 1);
-            Assert.True(result[0]);
+            var result2 = _client.ReadCoils(7, 1);
+            Assert.True(result2[0]);
 
             _source.WriteCoils(7, new[] { false });
-            result = _client.ReadCoils(7, 1);
-            Assert.False(result[0]);
+            var result3 = _client.ReadCoils(7, 1);
+            Assert.False(result3[0]);
         }
 
         [Fact]

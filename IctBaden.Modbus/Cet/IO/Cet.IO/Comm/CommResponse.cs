@@ -14,6 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
+// ReSharper disable RedundantArgumentDefaultValue
+// ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable StringLiteralTypo
 namespace Cet.IO
 {
     /// <summary>
@@ -90,16 +95,10 @@ namespace Cet.IO
         public readonly string Description;
 
 
-#if NET45
         public override string ToString()
         {
-            return string.Format(
-                "{0}: sts={1}; descr={2}",
-                this.GetType().Name,
-                this.Status,
-                this.Description
-                );
+            return $"{GetType().Name}: sts={Status}; descr={Description}";
         }
-#endif
+        
     }
 }

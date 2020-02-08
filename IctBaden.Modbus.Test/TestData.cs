@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Text;
 
 namespace IctBaden.Modbus.Test
 {
@@ -10,6 +12,19 @@ namespace IctBaden.Modbus.Test
         public bool IsConnected => true;
         public void ReConnect() { }
 
+
+        private void TraceCoilData(string context)
+        {
+            var text = new StringBuilder();
+            text.Append($"{context} - Coils: ");
+            foreach (var coil in _coils)
+            {
+                text.Append($"{(coil ? 1 : 0)}, ");
+            }
+            Trace.TraceInformation(text.ToString());
+        }
+        
+        
         public bool[] ReadInputDiscretes(int offset, int count)
         {
             var data = new bool[count];
@@ -25,12 +40,14 @@ namespace IctBaden.Modbus.Test
         {
             var data = new bool[count];
             Array.Copy(_coils, offset, data, 0, count);
+            TraceCoilData("Read");
             return data;
         }
 
         public bool WriteCoils(int offset, bool[] values)
         {
             Array.Copy(values, 0, _coils, offset, values.Length);
+            TraceCoilData("Write");
             return true;
         }
 
