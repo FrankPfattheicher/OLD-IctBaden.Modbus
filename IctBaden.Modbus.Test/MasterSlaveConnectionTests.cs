@@ -25,6 +25,13 @@ namespace IctBaden.Modbus.Test
 
         public void Dispose()
         {
+            if (_client != null)
+            {
+                _client.Disconnect();
+                _client.Dispose();
+                _client = null;
+            }
+
             if (_master != null)
             {
                 _master.DisconnectAllDevices();
