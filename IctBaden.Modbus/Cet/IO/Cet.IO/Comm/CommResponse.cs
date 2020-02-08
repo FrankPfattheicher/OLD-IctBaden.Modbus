@@ -54,6 +54,10 @@ namespace Cet.IO
         /// </remarks>
         public const int Ack = 3;
 
+        /// <summary>
+        /// Connection lost.
+        /// </summary>
+        public const int ConnectionLost = 4;
 
 
         public CommResponse(CommDataBase data)

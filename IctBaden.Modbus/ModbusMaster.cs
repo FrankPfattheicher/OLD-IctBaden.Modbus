@@ -7,8 +7,7 @@
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global
 
-using System.Threading.Tasks;
-
+// ReSharper disable MemberCanBePrivate.Global
 namespace IctBaden.Modbus
 {
     using System;
@@ -22,6 +21,7 @@ namespace IctBaden.Modbus
         public const int DefaultPort = 502;
 
         public string Name { get; private set; }
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string LastError { get; private set; }
         public List<ConnectedSlave> ConnectedSlaveDevices { get; private set; }
 
@@ -65,6 +65,14 @@ namespace IctBaden.Modbus
 
             LastError = null;
             var dev = new ConnectedSlave(this, sock, id);
+            dev.Disconnected += () =>
+            {
+                lock (ConnectedSlaveDevices)
+                {
+                    ConnectedSlaveDevices.Remove(dev);
+                }
+            };
+            
             lock (ConnectedSlaveDevices)
             {
                 ConnectedSlaveDevices.Add(dev);
@@ -113,5 +121,6 @@ namespace IctBaden.Modbus
             }
         }
 
+        
     }
 }

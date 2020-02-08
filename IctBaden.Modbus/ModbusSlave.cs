@@ -26,8 +26,7 @@ namespace IctBaden.Modbus
     /// </summary>
     public class ModbusSlave : IDisposable
     {
-        private readonly IPEndPoint _ipEndPoint;
-        private readonly Socket _listener;
+        private Socket _listener;
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
 
@@ -51,11 +50,6 @@ namespace IctBaden.Modbus
             Id = id;
 
             _connectedMasters = new List<Socket>();
-            
-            _ipEndPoint = new IPEndPoint(IPAddress.Any, Port);
-            _listener = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-            _listener.LingerState = new LingerOption(false, 0);
         }
 
         public void Dispose()
@@ -67,8 +61,13 @@ namespace IctBaden.Modbus
         {
             try
             {
+                var ipEndPoint = new IPEndPoint(IPAddress.Any, Port);
+                _listener = new Socket(ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                _listener.LingerState = new LingerOption(false, 0);
+
                 Trace.TraceInformation("*1");
-                _listener.Bind(_ipEndPoint);
+                _listener.Bind(ipEndPoint);
                 Trace.TraceInformation("*2");
                 _listener.Listen(10);
                 Trace.TraceInformation("*3");
@@ -99,13 +98,13 @@ namespace IctBaden.Modbus
 
             try
             {
-                _listener.Shutdown(SocketShutdown.Both);
+                _listener.Close();
                 _listener.Dispose();
-                
                 
                 var connected = _connectedMasters
                     .Where(cm => cm.Connected)
                     .ToArray();
+                
                 foreach (var client in connected)
                 {
                     try
@@ -127,6 +126,8 @@ namespace IctBaden.Modbus
                         client?.Dispose();
                     }
                 }
+                
+                _connectedMasters.Clear();
             }
             catch (Exception ex)
             {

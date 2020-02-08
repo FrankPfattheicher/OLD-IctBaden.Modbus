@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
+
 // ReSharper disable MemberCanBePrivate.Global
 
 namespace IctBaden.Modbus
@@ -54,6 +55,9 @@ namespace IctBaden.Modbus
 
         public bool IsConnected => (_socketConnection != null) && _socketConnection.Connected;
 
+        public event Action Disconnected;
+        
+        
         public void ReConnect()
         {
             if (_reconnecting) return;
@@ -113,6 +117,8 @@ namespace IctBaden.Modbus
             {
                 _socketConnection?.Close();
                 _socketConnection?.Dispose();
+
+                Disconnected?.Invoke();
             }
             _socketConnection = null;
         }
@@ -156,6 +162,10 @@ namespace IctBaden.Modbus
                     break;
                 case CommResponse.Unknown:
                     status = "Unknown";
+                    break;
+                case CommResponse.ConnectionLost:
+                    status = "Connection Lost";
+                    Disconnected?.Invoke();
                     break;
             }
             Trace.TraceError("ConnectedSlave.Execute: Response status=" + status);

@@ -9,7 +9,7 @@ namespace IctBaden.Modbus.Test
 {
     public class PollServiceTests : IDisposable
     {
-        private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
+        private static ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
@@ -24,6 +24,8 @@ namespace IctBaden.Modbus.Test
         {
             Trace.Listeners.Add(new TronTraceListener(true));
 
+            _port++;
+            
             _source = new TestData();
 
             _slave = new ModbusSlave("Test", _source, _port, 1);
@@ -196,7 +198,7 @@ namespace IctBaden.Modbus.Test
 
             // after two more seconds - the poll service should have reconnected
             Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-            Assert.True(poll.IsConnected);
+            AssertWait.Max(2000, () => poll.IsConnected);
             Assert.Equal(2, _connectionChanges);
 
             // after one more second - there should be no events
@@ -255,8 +257,8 @@ namespace IctBaden.Modbus.Test
             _slave.Start();
 
             // after four more seconds - the poll service should have reconnected
-            Task.Delay(TimeSpan.FromSeconds(4)).Wait();
-            Assert.True(poll.IsConnected);
+            Task.Delay(TimeSpan.FromSeconds(2)).Wait();
+            AssertWait.Max(2000, () => poll.IsConnected);
             Assert.Equal(2, _connectionChanges);      // disconnected, connected
             Assert.Equal(1, _processImageChanges);    // one image
             Assert.Equal(8, _inputChanges);           // count one bits of 0x55AA

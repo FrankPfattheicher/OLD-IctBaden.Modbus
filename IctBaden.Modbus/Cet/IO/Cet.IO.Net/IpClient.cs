@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Net.Sockets;
 using IctBaden.Framework.Timer;
+// ReSharper disable MemberCanBePrivate.Global
 
 // ReSharper disable ConvertToUsingDeclaration
 
@@ -31,14 +32,12 @@ namespace Cet.IO.Net
     internal class IpClient
         : ICommClient
     {
-        public IpClient(Socket port)
-        {
-            Port = port;
-        }
+        public IpClient(Socket port) => Port = port;
 
 
         public readonly Socket Port;
 
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public int Latency { get; set; }
 
 
@@ -64,18 +63,19 @@ namespace Cet.IO.Net
                 for (int attempt = 0, retries = data.Retries; attempt < retries; attempt++)
                 {
                     //physical writing
-                    if (Port.Connected)
+                    try
                     {
-                        try
-                        {
-                            Port.Send(outgoing);
-                        }
-                        catch (Exception ex)
-                        {
-                            Trace.TraceError(ex.Message);
-                            return new CommResponse(data, CommResponse.Critical);
-                        }
+                        Port.Send(outgoing);
                     }
+                    catch (Exception ex)
+                    {
+                        Trace.TraceError(ex.Message);
+
+                        return !Port.Connected 
+                            ? new CommResponse(data, CommResponse.ConnectionLost) 
+                            : new CommResponse(data, CommResponse.Critical);
+                    }
+                
 
                     incoming.Drop();
 
@@ -125,19 +125,19 @@ namespace Cet.IO.Net
                             {
                                 return result;
                             }
-                            else if (result.Status == CommResponse.Critical)
+
+                            if (result.Status == CommResponse.Critical)
                             {
                                 return result;
                             }
-                            else if (result.Status != CommResponse.Unknown)
+
+                            if (result.Status != CommResponse.Unknown)
                             {
                                 break;
                             }
                         }
 
                         Thread.Sleep(0);
-
-                        //TODO: stop immediately if the host asked to abort
                     }
                 } //for
 

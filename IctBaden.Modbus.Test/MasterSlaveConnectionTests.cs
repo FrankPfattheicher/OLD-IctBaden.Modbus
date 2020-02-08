@@ -11,7 +11,7 @@ namespace IctBaden.Modbus.Test
 {
     public class MasterSlaveConnectionTests : IDisposable
     {
-        private readonly ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
+        private static ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
@@ -21,6 +21,7 @@ namespace IctBaden.Modbus.Test
         {
             Trace.Listeners.Add(new TronTraceListener(true));
             _source = new TestData();
+            _port++;
         }
 
         public void Dispose()
@@ -95,6 +96,7 @@ namespace IctBaden.Modbus.Test
             ConnectMasterAndSlave();
             
             Assert.True(_master.ConnectedSlaveDevices.First() == _client);
+            AssertWait.Max(1000, () => _slave.IsConnected);
         }
         
         [Fact]
@@ -127,6 +129,31 @@ namespace IctBaden.Modbus.Test
             Assert.Equal(new ushort[] { 2, 2, 3, 3 }, result);
         }
 
+        [Fact]
+        public void DisconnectClientShouldBeRemovedFromMaster()
+        {
+            ConnectMasterAndSlave();
+            AssertWait.Max(1000, () => _slave.IsConnected);
+            
+            _client.Disconnect();
+            
+            AssertWait.Max(10000, () => _master.ConnectedSlaveDevices.Count == 0);
+        }
+
+        
+        [Fact]
+        public void TerminatingSlaveShouldBeRemovedFromMaster()
+        {
+            ConnectMasterAndSlave();
+            AssertWait.Max(1000, () => _slave.IsConnected);
+            
+            _slave.Terminate();
+
+            _client.ReadInputRegisters(0, 1);
+            Assert.True(_master.ConnectedSlaveDevices.Count == 0);
+        }
+
+        
         [Fact]
         public void TransferCoils()
         {
