@@ -6,6 +6,9 @@
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global
+
+using System.Threading.Tasks;
+
 namespace IctBaden.Modbus
 {
     using System;
@@ -66,6 +69,7 @@ namespace IctBaden.Modbus
             {
                 ConnectedSlaveDevices.Add(dev);
             }
+
             Trace.TraceInformation("ModbusMaster: Connected to device {0}:{1} id={2}", address, port, id);
             return dev;
         }

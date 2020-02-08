@@ -63,7 +63,7 @@ namespace Cet.IO.Net
             //retries loop
             for (int attempt = 0, retries = data.Retries; attempt < retries; attempt++)
             {
-                //phyiscal writing
+                //physical writing
                 this.Send(outgoing);
 
                 //create a writer for accumulate the incoming data

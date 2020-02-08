@@ -50,7 +50,7 @@ namespace Cet.IO.Net
             lock (Port)
             {
                 //convert the request data as an ordinary byte array
-                byte[] outgoing = ((IByteArray)data.OutgoingData).Data;
+                var outgoing = data.OutgoingData.ToByteArray();
 
                 //create a writer for accumulate the incoming data
                 var incoming = new ByteArrayWriter();

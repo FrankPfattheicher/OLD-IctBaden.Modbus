@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Cet.IO;
 using Cet.IO.Net;
@@ -19,20 +18,15 @@ using IctBaden.Framework.AppUtils;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable EventNeverSubscribedTo.Global
 
-/*
- * A Modbus Slave is a TCP server
- * waiting for a Master's connection and commands.
- * 
- */
-
 namespace IctBaden.Modbus
 {
+    /// <summary>
+    /// A Modbus Slave is a TCP server
+    /// waiting for a Master's connection and commands. 
+    /// </summary>
     public class ModbusSlave
     {
-        private Task _runner;
-        private CancellationTokenSource _cancel;
         private Socket _listener;
-        private readonly ManualResetEvent _clientAccepted;
 
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
@@ -57,7 +51,6 @@ namespace IctBaden.Modbus
             Id = id;
 
             _connectedMasters = new List<Socket>();
-            _clientAccepted = new ManualResetEvent(false);
         }
 
         public void Start()
@@ -66,10 +59,8 @@ namespace IctBaden.Modbus
             _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             _listener.LingerState = new LingerOption(false, 0);
 
-            _cancel = new CancellationTokenSource();
-            _runner = new Task(RunnerDoWork, _cancel.Token);
-            _runner.Start();
-
+            StartListener();
+                
             Trace.TraceInformation("ModbusSlave: Started {0,5}:{1}  {2}", Port, Id, Name);
         }
 
@@ -117,10 +108,6 @@ namespace IctBaden.Modbus
                     Task.Delay(100).Wait();
                 }
 
-                _cancel.Cancel();
-                _runner.Wait();
-                _runner.Dispose();
-
                 var listener = _listener;
                 _listener = null;
                 listener.Close();
@@ -133,7 +120,7 @@ namespace IctBaden.Modbus
             }
         }
 
-        void RunnerDoWork()
+        private void StartListener()
         {
             try
             {
@@ -144,6 +131,8 @@ namespace IctBaden.Modbus
 
                 _listener.Bind(ept);
                 _listener.Listen(10);
+                
+                _listener.BeginAccept(AcceptClient, _listener);
             }
             catch (Exception ex)
             {
@@ -154,52 +143,39 @@ namespace IctBaden.Modbus
                         Trace.TraceError("Ports below 1024 are considered 'privileged' and can only be bound to with an equally privileged user (read: root).");
                     }
                 }
-                Debug.WriteLine(ex.Message);
-                return;
-            }
-
-            _clientAccepted.Set();
-            while(!_cancel.IsCancellationRequested && _listener.IsBound)
-            {
-                try
-                {
-                    if (_clientAccepted.WaitOne(1000, false))
-                    {
-                        _clientAccepted.Reset();
-                        _listener?.BeginAccept(AcceptClient, null);
-                    }
-                }
-                catch (SocketException ex)
-                {
-                    Trace.TraceError(ex.Message);
-                    break;
-                }
+                Trace.TraceError("ModbusSlave: " + ex.Message);
             }
         }
 
         private void AcceptClient(IAsyncResult ar)
         {
-            _clientAccepted.Set();
+            if (!(ar.AsyncState is Socket listener)) return;
 
             try
             {
-                var client = _listener?.EndAccept(ar);
+                var client = listener.EndAccept(ar);
                 var address = client?.RemoteEndPoint.ToString();
 
-                if (address == null)
-                    return;
+                if (address != null)
+                {
+                    Trace.TraceInformation("ModbusSlave: Client connected " + address);
+                    _connectedMasters.Add(client);
+                    Connected?.Invoke(address);
+                    LastAccess = DateTime.Now;
 
-                Trace.TraceInformation("ModbusSlave: Client connected " + address);
-                _connectedMasters.Add(client);
-                Connected?.Invoke(address);
-                LastAccess = DateTime.Now;
+                    var codec = new ModbusTcpCodec();
+                    var server = new ModbusServer(codec) {Address = Id};
+                    var host = new TcpServer(client, server) {IdleTimeout = 60};
+                    host.ServeCommand += ListenerServeCommand;
+                    host.Start();
+                    host.Disconnected += () => OnClientDisconnected(client, address);
+                }
 
-                var codec = new ModbusTcpCodec();
-                var server = new ModbusServer(codec) { Address = Id };
-                var host = new TcpServer(client, server) { IdleTimeout = 60 };
-                host.ServeCommand += ListenerServeCommand;
-                host.Start();
-                host.Disconnected += () => OnClientDisconnected(client, address);
+                listener?.BeginAccept(AcceptClient, listener);
+            }
+            catch (ObjectDisposedException)
+            {
+                // terminated
             }
             catch (Exception ex)
             {
