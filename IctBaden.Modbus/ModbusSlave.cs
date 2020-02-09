@@ -66,14 +66,10 @@ namespace IctBaden.Modbus
                 _listener.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _listener.LingerState = new LingerOption(false, 0);
 
-                Trace.TraceInformation("*1");
                 _listener.Bind(ipEndPoint);
-                Trace.TraceInformation("*2");
                 _listener.Listen(10);
-                Trace.TraceInformation("*3");
 
                 _listener.BeginAccept(AcceptClient, _listener);
-                Trace.TraceInformation($"*4 IsBound = {_listener.IsBound}");
             }
             catch (Exception ex)
             {
@@ -151,17 +147,12 @@ namespace IctBaden.Modbus
 
         private void AcceptClient(IAsyncResult ar)
         {
-            Trace.TraceInformation("~1");
             if (!(ar.AsyncState is Socket listener)) return;
-            Trace.TraceInformation("~2");
 
             try
             {
-                Trace.TraceInformation("#1");
                 var client = listener.EndAccept(ar);
-                Trace.TraceInformation("#2");
                 var address = client?.RemoteEndPoint.ToString();
-                Trace.TraceInformation("#3");
 
                 if (address != null)
                 {
@@ -173,7 +164,6 @@ namespace IctBaden.Modbus
                     var codec = new ModbusTcpCodec();
                     var server = new ModbusServer(codec) {Address = Id};
                     var host = new TcpServer(client, server) {IdleTimeout = 60};
-                    Trace.TraceInformation("#4");
                     host.ServeCommand += ListenerServeCommand;
                     host.Start();
                     host.Disconnected += () => OnClientDisconnected(client, address);
@@ -200,7 +190,6 @@ namespace IctBaden.Modbus
 
         void ListenerServeCommand(object sender, ServeCommandEventArgs e)
         {
-            Trace.TraceInformation("ListenerServeCommand");
             LastAccess = DateTime.Now;
 
             var command = (ModbusCommand)e.Data.UserData;
