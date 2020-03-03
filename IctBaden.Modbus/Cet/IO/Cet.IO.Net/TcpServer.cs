@@ -40,7 +40,7 @@ namespace Cet.IO.Net
 
         private const int CacheSize = 300;
 
-        internal int IdleTimeout = 10;
+        public int IdleTimeout = 10;
 
         public event Action Disconnected;
 
