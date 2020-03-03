@@ -26,7 +26,7 @@ namespace Cet.IO.Net
     /// <summary>
     /// Base/abstract implementation of an IP-listener
     /// </summary>
-    internal abstract class IpServer
+    public abstract class IpServer
         : ICommServer
     {
         protected IpServer(

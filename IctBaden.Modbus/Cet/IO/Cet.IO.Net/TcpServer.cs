@@ -27,7 +27,7 @@ namespace Cet.IO.Net
     /// <summary>
     /// Concrete implementation of a TCP-listener
     /// </summary>
-    internal class TcpServer
+    public class TcpServer
         : IpServer
     {
         public TcpServer(

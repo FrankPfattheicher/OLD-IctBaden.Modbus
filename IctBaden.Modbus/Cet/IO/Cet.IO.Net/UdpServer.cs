@@ -25,7 +25,7 @@ namespace Cet.IO.Net
     /// <summary>
     /// Concrete implementation of a UDP-listener
     /// </summary>
-    internal class UdpServer
+    public class UdpServer
         : IpServer
     {
         public UdpServer(
