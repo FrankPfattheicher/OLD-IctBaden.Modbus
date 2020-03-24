@@ -22,6 +22,7 @@ namespace IctBaden.Modbus
         public byte Id { get; }
 
         private readonly ModbusClient _client;
+        private int _failures;
         private bool _reconnecting;
 
         public ConnectedSlave(ModbusMaster master, Socket connection, byte id)
@@ -41,6 +42,7 @@ namespace IctBaden.Modbus
             Id = id;
             var codec = new ModbusTcpCodec();
             _client = new ModbusClient(codec) { Address = Id };
+            _failures = 0;
         }
 
         public override string ToString()
@@ -148,6 +150,7 @@ namespace IctBaden.Modbus
             var response = _client.ExecuteGeneric(CommClient, command);
             if (response.Status == CommResponse.Ack)
             {
+                _failures = 0;
                 return response.Data.UserData as ModbusCommand;
             }
 
@@ -156,6 +159,12 @@ namespace IctBaden.Modbus
             {
                 case CommResponse.Critical:
                     status = "Critical";
+                    _failures++;
+                    if (_failures > 3)
+                    {
+                        _socketConnection.Disconnect(true);
+                        Disconnected?.Invoke();
+                    }
                     break;
                 case CommResponse.Ignore:
                     status = "Ignore";
