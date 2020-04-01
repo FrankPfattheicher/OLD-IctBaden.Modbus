@@ -8,6 +8,7 @@
 // ReSharper disable UnusedMember.Global
 
 // ReSharper disable MemberCanBePrivate.Global
+
 namespace IctBaden.Modbus
 {
     using System;
@@ -21,6 +22,7 @@ namespace IctBaden.Modbus
         public const int DefaultPort = 502;
 
         public string Name { get; private set; }
+
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public string LastError { get; private set; }
         public List<ConnectedSlave> ConnectedSlaveDevices { get; private set; }
@@ -31,6 +33,7 @@ namespace IctBaden.Modbus
         {
             Name = name;
         }
+
         public ModbusMaster()
         {
             ConnectedSlaveDevices = new List<ConnectedSlave>();
@@ -58,7 +61,8 @@ namespace IctBaden.Modbus
             catch (Exception ex)
             {
                 LastError = ex.Message;
-                Trace.TraceError("ModbusMaster: Could not connect to {0}:{1} id={2}" + Environment.NewLine + ex.Message, address, port, id);
+                Trace.TraceError("ModbusMaster: Could not connect to {0}:{1} id={2}" + Environment.NewLine + ex.Message,
+                    address, port, id);
                 sock.Dispose();
                 return null;
             }
@@ -72,7 +76,7 @@ namespace IctBaden.Modbus
                     ConnectedSlaveDevices.Remove(dev);
                 }
             };
-            
+
             lock (ConnectedSlaveDevices)
             {
                 ConnectedSlaveDevices.Add(dev);
@@ -89,6 +93,7 @@ namespace IctBaden.Modbus
             {
                 dev = ConnectedSlaveDevices.FirstOrDefault(d => slave == d as IDataAccess);
             }
+
             if (dev == null)
                 return;
 
@@ -98,14 +103,17 @@ namespace IctBaden.Modbus
             {
                 ConnectedSlaveDevices.Remove(dev);
             }
-            Trace.TraceInformation("ModbusMaster: Disconnected from device {0}:{1} id={2}", dev.Address, dev.Port, dev.Id);
+
+            Trace.TraceInformation("ModbusMaster: Disconnected from device {0}:{1} id={2}", dev.Address, dev.Port,
+                dev.Id);
         }
 
         public void DisconnectAllDevices()
         {
             lock (ConnectedSlaveDevices)
             {
-                foreach (var dev in ConnectedSlaveDevices)
+                var csd = ConnectedSlaveDevices.ToArray();
+                foreach (var dev in csd)
                 {
                     try
                     {
@@ -120,7 +128,5 @@ namespace IctBaden.Modbus
                 ConnectedSlaveDevices.Clear();
             }
         }
-
-        
     }
 }
