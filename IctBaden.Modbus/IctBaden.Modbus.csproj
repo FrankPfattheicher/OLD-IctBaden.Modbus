@@ -10,7 +10,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="IctBaden.Framework" Version="1.0.15" />
+      <PackageReference Include="IctBaden.Framework" Version="1.0.17" />
     </ItemGroup>
 
 </Project>
