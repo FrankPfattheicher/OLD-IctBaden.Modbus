@@ -30,9 +30,9 @@ namespace IctBaden.Modbus
         };
 
         public event Action<ProcessImageChangeEventParams> ProcessImageChanged;
-        public event Action<int, bool> InputChanged;
-        public event Action PollFailed;
-        public event Action<bool> ConnectionChanged;
+        public event Action<string, int, bool> InputChanged;
+        public event Action<string> PollFailed;
+        public event Action<string, bool> ConnectionChanged;
 
         private readonly ModbusMaster _master;
         private readonly string _address;
@@ -52,6 +52,7 @@ namespace IctBaden.Modbus
         private bool _oldConnected;
         private ushort[] _newProcessImage;
         private ushort[] _oldProcessImage;
+        private string _connectionContext = GetPollContext();
 
         /// <summary>
         /// Start polling already connected slave.
@@ -156,7 +157,7 @@ namespace IctBaden.Modbus
         {
             if (_oldConnected)
             {
-                ConnectionChanged?.Invoke(false);
+                ConnectionChanged?.Invoke(_connectionContext, false);
                 _oldConnected = false;
             }
 
@@ -232,7 +233,7 @@ namespace IctBaden.Modbus
         {
             if (!_oldConnected)
             {
-                ConnectionChanged?.Invoke(true);
+                ConnectionChanged?.Invoke(_connectionContext, true);
                 _oldConnected = true;
             }
 
@@ -261,21 +262,27 @@ namespace IctBaden.Modbus
             GoState(next);
         }
 
+        public static string GetPollContext() => Guid.NewGuid()
+            .ToString("N")
+            .Substring(4,6)
+            .ToUpper();
+
         private void PollRegistersOk()
         {
+            var ctx = GetPollContext();
             var message = "ProcessImage:";
             for (var offset = 0; offset < _pollCount; offset++)
             {
                 message += $" {_newProcessImage[offset]:X4}";
                 if (_newProcessImage[offset] == ProcessImage[offset]) continue;
 
-                ProcessImageChanged?.Invoke(new ProcessImageChangeEventParams(offset, ProcessImage[offset], _newProcessImage[offset]));
+                ProcessImageChanged?.Invoke(new ProcessImageChangeEventParams(ctx, offset, ProcessImage[offset], _newProcessImage[offset]));
                 for (var bit = 0; bit < 16; bit++)
                 {
                     var bitMask = 1 << bit;
                     if ((_newProcessImage[offset] & bitMask) != (ProcessImage[offset] & bitMask))
                     {
-                        InputChanged?.Invoke(offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
+                        InputChanged?.Invoke(ctx, offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
                     }
                 }
             }
@@ -288,7 +295,7 @@ namespace IctBaden.Modbus
 
         private void PollRegistersFailed()
         {
-            PollFailed?.Invoke();
+            PollFailed?.Invoke(_connectionContext);
             _retryCount++;
             Thread.Sleep(PollRetryInterval);
 
@@ -303,7 +310,7 @@ namespace IctBaden.Modbus
         {
             if (_oldConnected)
             {
-                ConnectionChanged?.Invoke(false);
+                ConnectionChanged?.Invoke(_connectionContext, false);
                 _oldConnected = false;
             }
             GoState(Reconnect);

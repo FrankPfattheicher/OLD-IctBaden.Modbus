@@ -162,7 +162,7 @@ namespace IctBaden.Modbus
                     _failures++;
                     if (_failures > 3)
                     {
-                        _socketConnection.Disconnect(true);
+                        _socketConnection.DisconnectAsync(new SocketAsyncEventArgs { DisconnectReuseSocket = true });
                         Disconnected?.Invoke();
                     }
                     break;
@@ -174,6 +174,7 @@ namespace IctBaden.Modbus
                     break;
                 case CommResponse.ConnectionLost:
                     status = "Connection Lost";
+                    _socketConnection.DisconnectAsync(new SocketAsyncEventArgs { DisconnectReuseSocket = true });
                     Disconnected?.Invoke();
                     break;
             }

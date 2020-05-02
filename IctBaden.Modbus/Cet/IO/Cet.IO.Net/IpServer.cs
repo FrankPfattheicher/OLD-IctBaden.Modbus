@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Threading;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Cet.IO.Protocols;
