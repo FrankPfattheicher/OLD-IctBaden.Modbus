@@ -118,7 +118,7 @@ namespace IctBaden.Modbus
 
             var p = _pollingTask;
             _pollingTask = null;
-            p.Wait(TimeSpan.FromSeconds(10));
+            p?.Wait(TimeSpan.FromSeconds(10));
 
             if (_pollDevice != null)
             {
