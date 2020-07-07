@@ -245,7 +245,7 @@ namespace IctBaden.Modbus
 
         public bool WriteRegisters(int offset, ushort[] values)
         {
-            var cmd = new ModbusCommand(ModbusCommand.FuncWriteSingleRegister)
+            var cmd = new ModbusCommand(ModbusCommand.FuncWriteMultipleRegisters)
             {
                 Address = Id,
                 Offset = offset,

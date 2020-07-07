@@ -150,8 +150,8 @@ namespace IctBaden.Modbus.Test
         {
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Holding, 0, 50);
             poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (i,v) => { _inputChanges++; };
-            poll.PollFailed += () => { _pollFailed++; };
+            poll.InputChanged += (_, i,v) => { _inputChanges++; };
+            poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
             WaitForStableConnection(poll);
@@ -175,10 +175,10 @@ namespace IctBaden.Modbus.Test
             {
                 PollRetries = 0
             };
-            poll.ConnectionChanged += (e) => { _connectionChanges++; };
+            poll.ConnectionChanged += (_, e) => { _connectionChanges++; };
             poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (i, v) => { _inputChanges++; };
-            poll.PollFailed += () => { _pollFailed++; };
+            poll.InputChanged += (_, i, v) => { _inputChanges++; };
+            poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
             WaitForStableConnection(poll);
@@ -227,10 +227,10 @@ namespace IctBaden.Modbus.Test
             {
                 PollRetries = 0
             };
-            poll.ConnectionChanged += (e) => { _connectionChanges++; };
+            poll.ConnectionChanged += (_, e) => { _connectionChanges++; };
             poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (i, v) => { _inputChanges++; };
-            poll.PollFailed += () => { _pollFailed++; };
+            poll.InputChanged += (_, i, v) => { _inputChanges++; };
+            poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
             WaitForStableConnection(poll);
