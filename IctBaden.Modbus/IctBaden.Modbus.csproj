@@ -3,12 +3,22 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>default</LangVersion>
-        <PackageVersion>2.0.2</PackageVersion>
+        <PackageVersion>2.1.0</PackageVersion>
         <AssemblyVersion>2.0.2</AssemblyVersion>
         <FileVersion>2.0.2</FileVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Title>Modbus Library</Title>
+        <Authors>Frank Pfattheicher</Authors>
+        <Description>Modbus Library</Description>
+        <Copyright>(C)2010-2020 ICT Baden GmbH</Copyright>
+        <PackageProjectUrl>https://github.com/FrankPfattheicher/IctBaden.Modbus</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/FrankPfattheicher/IctBaden.Modbus</RepositoryUrl>
+        <PackageTags>C# Modbus</PackageTags>
     </PropertyGroup>
-
+    <ItemGroup>
+        <Content Include="..\LICENSE" />
+    </ItemGroup>
+    
     <ItemGroup>
       <PackageReference Include="IctBaden.Framework" Version="1.0.17" />
     </ItemGroup>
