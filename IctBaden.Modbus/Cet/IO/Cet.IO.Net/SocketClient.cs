@@ -5,6 +5,11 @@ using System.Net;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+// ReSharper disable CheckNamespace
+// ReSharper disable InconsistentNaming
+// ReSharper disable FieldCanBeMadeReadOnly.Local
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
 
 
 namespace Cet.IO.Net
@@ -37,7 +42,7 @@ namespace Cet.IO.Net
         public int Latency { get; set; }
         public string LastError { get; private set; }
 
-        public bool IsConnected { get { return (_socket != null) && _socket.Connected; } }
+        public bool IsConnected => (_socket != null) && _socket.Connected;
 
         public EndPoint RemoteEndPoint
         {
@@ -55,11 +60,11 @@ namespace Cet.IO.Net
         public CommResponse Query(ClientCommData data)
         {
             //convert the request data as an ordinary byte array
-            byte[] outgoing = data
+            var outgoing = data
                 .OutgoingData
                 .ToArray();
 
-            int totalTimeout = this.Latency + data.Timeout;
+            var totalTimeout = this.Latency + data.Timeout;
 
             //retries loop
             for (int attempt = 0, retries = data.Retries; attempt < retries; attempt++)

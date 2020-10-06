@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Cet.IO.Protocols;
+// ReSharper disable CheckNamespace
+// ReSharper disable InconsistentNaming
 
 /*
  * Copyright 2012, 2013 by Mario Vernari, Cet Electronics
