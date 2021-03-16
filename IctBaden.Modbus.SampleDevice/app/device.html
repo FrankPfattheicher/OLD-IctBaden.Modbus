@@ -1,0 +1,30 @@
+<!--Title:DEVICE:10-->
+<div style="margin: 24px;">
+    
+    <h4>Modbus Device</h4>
+    <table>
+        <tr>
+            <th>
+                Connected Server        
+            </th>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                {{ConnectedServer}}
+            </td>
+        </tr>
+        <tr v-for="i in Inputs">
+            <th>
+                <span v-if="i.Number == 1">Inputs</span>
+            </th>
+            <th>
+                {{i.Number}}
+            </th>
+            <td>
+                <input type="checkbox" :checked="i.Value" @click="ToggleInput(i.Number)"/>
+            </td>
+        </tr>
+    </table>
+    
+</div>

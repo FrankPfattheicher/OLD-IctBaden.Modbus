@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <LangVersion>9</LangVersion>
+        <IsPackable>false</IsPackable>
+        <ApplicationIcon>Modbus.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="IctBaden.Framework" Version="1.1.4" />
+      <PackageReference Include="IctBaden.Stonehenge3" Version="3.17.6" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="app\device.html" />
+      <EmbeddedResource Include="app\device.html" />
+      <None Remove="app\index.html" />
+      <EmbeddedResource Include="app\index.html" />
+      <None Remove="app\images\ModbusLogo.png" />
+      <EmbeddedResource Include="app\images\ModbusLogo.png" />
+      <None Remove="app\favicon.ico" />
+      <EmbeddedResource Include="app\favicon.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\IctBaden.Modbus.Test\IctBaden.Modbus.Test.csproj" />
+      <ProjectReference Include="..\IctBaden.Modbus\IctBaden.Modbus.csproj" />
+    </ItemGroup>
+
+</Project>

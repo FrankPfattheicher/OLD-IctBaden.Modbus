@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html translate="no">
+<head>
+    <meta charset="UTF-8">
+    <!--IctBaden.Stonehenge3.Vue.index.html-->
+    <title>stonehengeAppTitle</title>
+    <script type="application/javascript" src="src/vue{.min}.js"></script>
+    <script type="application/javascript" src="src/vue-router{.min}.js"></script>
+    <script type="application/javascript" src="src/vue-resource{.min}.js"></script>
+
+    <link type="text/css" rel="stylesheet" href="src/bootstrap{.min}.css"/>
+    <link type="text/css" rel="stylesheet" href="src/bootstrap-vue{.min}.css"/>
+    <link type="text/css" rel="stylesheet" href="src/fa_free_all{.min}.css">
+    <!--stonehengeUserStylesheets-->
+
+    <script type="application/javascript" src="src/bootstrap-vue{.min}.js"></script>
+    <!--stonehengeUserScripts-->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body>
+
+<div id="app">
+
+    <b-navbar toggleable="md" type="dark" variant="info">
+
+        <b-navbar-toggle target="nav_collapse"></b-navbar-toggle>
+
+        <b-navbar-brand href="https://modbus.org/">
+            <img src="images/ModbusLogo.png" style="height: 1.5em;" />            
+        </b-navbar-brand>
+
+        <b-collapse is-nav id="nav_collapse">
+
+            <b-navbar-nav>
+                <b-nav-item v-for="route in routes" v-if="route.visible"
+                            :key="route.name" :to="{ name: route.name }">{{route.title}}
+                </b-nav-item>
+            </b-navbar-nav>
+
+            <!-- Right aligned nav items 
+            <b-navbar-nav class="ml-auto">
+
+                <b-nav-form>
+                    <b-form-input size="sm" class="mr-sm-2" type="text" placeholder="Search"/>
+                    <b-button size="sm" class="my-2 my-sm-0" type="submit">Search</b-button>
+                </b-nav-form>
+
+                <b-nav-item-dropdown text="Lang " right>
+                    <b-dropdown-item href="#">EN</b-dropdown-item>
+                    <b-dropdown-item href="#">ES</b-dropdown-item>
+                    <b-dropdown-item href="#">RU</b-dropdown-item>
+                    <b-dropdown-item href="#">FA</b-dropdown-item>
+                </b-nav-item-dropdown>
+
+                <b-nav-item-dropdown right>
+                    Using button-content slot
+                    <template slot="button-content">
+                        <em>User&nbsp;</em>
+                    </template>
+                    <b-dropdown-item href="#">Profile</b-dropdown-item>
+                    <b-dropdown-item href="#">Signout</b-dropdown-item>
+                </b-nav-item-dropdown>
+            </b-navbar-nav>
+                -->
+
+        </b-collapse>
+    </b-navbar>
+
+    <p>
+        <router-view></router-view>
+    </p>
+
+</div>
+
+<script type="application/javascript" src="app.js"></script>
+
+</body>
+</html>

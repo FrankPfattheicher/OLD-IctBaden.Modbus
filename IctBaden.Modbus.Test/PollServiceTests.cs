@@ -9,7 +9,7 @@ namespace IctBaden.Modbus.Test
 {
     public class PollServiceTests : IDisposable
     {
-        private static ushort _port = (ushort) ((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
+        private static ushort _port = (SystemInfo.Platform == Platform.Windows) ? 502 : 1502; 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
@@ -88,7 +88,7 @@ namespace IctBaden.Modbus.Test
         public void PollServiceShouldNotSendEventsIfNothingChanges()
         {
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Holding, 0, 50);
-            poll.ProcessImageChanged += (e) => { _processImageChanges++; };
+            poll.ProcessImageChanged += (_) => { _processImageChanges++; };
             var started = poll.Start(TimeSpan.FromSeconds(1), true);
             Assert.True(started);
             WaitForStableConnection(poll);
@@ -114,7 +114,7 @@ namespace IctBaden.Modbus.Test
         public void PollServiceShouldSendFirstEventWithinOneSecond()
         {
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Holding, 0, 50);
-            poll.ProcessImageChanged += (e) => { _processImageChanges++; };
+            poll.ProcessImageChanged += (_) => { _processImageChanges++; };
             var started = poll.Start(TimeSpan.FromSeconds(1), true);
             Assert.True(started);
             WaitForStableConnection(poll);
@@ -149,8 +149,8 @@ namespace IctBaden.Modbus.Test
         public void PollServiceShouldSendFailedEventIfDeviceVanishesAndNoOthers()
         {
             var poll = new ModbusDevicePollService(_client, ModbusDevicePollService.Register.Holding, 0, 50);
-            poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (_, i,v) => { _inputChanges++; };
+            poll.ProcessImageChanged += _ => { _processImageChanges++; };
+            poll.InputChanged += (_, _, _) => { _inputChanges++; };
             poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
@@ -175,9 +175,9 @@ namespace IctBaden.Modbus.Test
             {
                 PollRetries = 0
             };
-            poll.ConnectionChanged += (_, e) => { _connectionChanges++; };
-            poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (_, i, v) => { _inputChanges++; };
+            poll.ConnectionChanged += (_, _) => { _connectionChanges++; };
+            poll.ProcessImageChanged += _ => { _processImageChanges++; };
+            poll.InputChanged += (_, _, _) => { _inputChanges++; };
             poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);
@@ -227,9 +227,9 @@ namespace IctBaden.Modbus.Test
             {
                 PollRetries = 0
             };
-            poll.ConnectionChanged += (_, e) => { _connectionChanges++; };
-            poll.ProcessImageChanged += (e) => { _processImageChanges++; };
-            poll.InputChanged += (_, i, v) => { _inputChanges++; };
+            poll.ConnectionChanged += (_, _) => { _connectionChanges++; };
+            poll.ProcessImageChanged += _ => { _processImageChanges++; };
+            poll.InputChanged += (_, _, _) => { _inputChanges++; };
             poll.PollFailed += (_) => { _pollFailed++; };
             var started = poll.Start(TimeSpan.FromSeconds(0.5), true);
             Assert.True(started);

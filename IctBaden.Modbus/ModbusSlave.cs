@@ -29,6 +29,9 @@ namespace IctBaden.Modbus
         private Socket _listener;
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
+        public string[] ConnectedMasters => _connectedMasters
+            .Select(m => m.RemoteEndPoint.ToString())
+            .ToArray();
 
         public string Name { get; private set; }
         public ushort Port { get; private set; }
@@ -205,7 +208,7 @@ namespace IctBaden.Modbus
                     var boolArray = DataAccess.ReadCoils(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
+                        command.Data[i] = boolArray[i] ? 1 : 0;
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
@@ -216,7 +219,7 @@ namespace IctBaden.Modbus
                     boolArray = DataAccess.ReadInputDiscretes(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
+                        command.Data[i] = boolArray[i] ? 1 : 0;
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
