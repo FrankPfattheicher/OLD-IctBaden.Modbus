@@ -6,8 +6,8 @@ namespace IctBaden.Modbus.Test
 {
     public class TestData : IDataAccess
     {
-        private readonly bool[] _coils = new bool[100];
-        private readonly ushort[] _registers = new ushort[100];
+        private readonly bool[] _coils = new bool[1024];
+        private readonly ushort[] _registers = new ushort[1024];
 
         public bool IsConnected => true;
         public void ReConnect() { }

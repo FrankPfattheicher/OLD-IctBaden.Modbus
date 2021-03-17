@@ -208,7 +208,7 @@ namespace IctBaden.Modbus
                     var boolArray = DataAccess.ReadCoils(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        command.Data[i] = boolArray[i] ? 1 : 0;
+                        command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);
@@ -219,7 +219,7 @@ namespace IctBaden.Modbus
                     boolArray = DataAccess.ReadInputDiscretes(command.Offset, command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
-                        command.Data[i] = boolArray[i] ? 1 : 0;
+                        command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
                     }
                     traceLines.AppendLine(string.Empty);

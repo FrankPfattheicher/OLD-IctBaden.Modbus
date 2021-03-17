@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using IctBaden.Framework.Tron;
 using IctBaden.Modbus.Test;
 using IctBaden.Stonehenge3.Hosting;
 using IctBaden.Stonehenge3.Kestrel;
@@ -13,6 +15,8 @@ namespace IctBaden.Modbus.SampleDevice
         private static void Main(string[] args)
         {
             Console.WriteLine("IctBaden.Modbus.SampleDevice");
+
+            Trace.Listeners.Add(new TronTraceListener(true));
 
             var logger = Framework.Logging.Logger.DefaultFactory.CreateLogger("Modbus");
 

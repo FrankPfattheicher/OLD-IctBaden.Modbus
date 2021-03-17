@@ -69,6 +69,11 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
                 .Aggregate(0, (i, vm) => i | (vm.Value ? 1 : 0) << (vm.Number - 1));
 
             _data.WriteRegisters(0, new[] {dataValue});
+            
+            foreach (var input in Inputs)
+            {
+                _data.WriteCoils(input.Number - 1, new bool[] {input.Value});
+            }
         }
 
         public void Dispose()

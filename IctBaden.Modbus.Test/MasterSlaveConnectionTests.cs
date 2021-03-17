@@ -11,7 +11,7 @@ namespace IctBaden.Modbus.Test
 {
     public class MasterSlaveConnectionTests : IDisposable
     {
-        private static ushort _port = (SystemInfo.Platform == Platform.Windows) ? 502 : 1502; 
+        private static ushort _port = (ushort)((SystemInfo.Platform == Platform.Windows) ? 502 : 1502); 
         private readonly TestData _source;
         private ModbusMaster _master;
         private ModbusSlave _slave;
