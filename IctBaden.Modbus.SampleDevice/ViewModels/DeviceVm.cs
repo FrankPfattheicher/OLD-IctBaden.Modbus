@@ -34,7 +34,7 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
 
             if (_device.IsConnected)
             {
-                DeviceOnConnected(_device.ConnectedMasters.First());
+                DeviceOnConnected(_device.GetConnectedMasters().First());
             }
             else
             {
@@ -72,7 +72,7 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
             
             foreach (var input in Inputs)
             {
-                _data.WriteCoils(input.Number - 1, new bool[] {input.Value});
+                _data.WriteCoils(input.Number - 1, new[] {input.Value});
             }
         }
 

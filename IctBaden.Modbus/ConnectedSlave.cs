@@ -55,7 +55,7 @@ namespace IctBaden.Modbus
             Disconnect();
         }
 
-        public bool IsConnected => (_socketConnection != null) && _socketConnection.Connected;
+        public bool IsConnected => _socketConnection is {Connected: true};
 
         public event Action Disconnected;
         

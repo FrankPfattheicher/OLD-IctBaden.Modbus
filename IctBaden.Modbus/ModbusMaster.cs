@@ -91,7 +91,7 @@ namespace IctBaden.Modbus
             ConnectedSlave dev;
             lock (ConnectedSlaveDevices)
             {
-                dev = ConnectedSlaveDevices.FirstOrDefault(d => slave == d as IDataAccess);
+                dev = ConnectedSlaveDevices.FirstOrDefault(d => slave == d);
             }
 
             if (dev == null)

@@ -29,7 +29,7 @@ namespace IctBaden.Modbus
         private Socket _listener;
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
-        public string[] ConnectedMasters => _connectedMasters
+        public string[] GetConnectedMasters() => _connectedMasters
             .Select(m => m.RemoteEndPoint.ToString())
             .ToArray();
 
