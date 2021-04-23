@@ -27,6 +27,7 @@ namespace IctBaden.Modbus
     public class ModbusSlave : IDisposable
     {
         private Socket _listener;
+        private bool _enableCommandTrace;
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
         public string[] GetConnectedMasters() => _connectedMasters
@@ -60,6 +61,11 @@ namespace IctBaden.Modbus
             _listener?.Dispose();
         }
 
+        public void EnableCommandTrace(bool enable = true)
+        {
+            _enableCommandTrace = enable;
+        }
+        
         public void Start()
         {
             try
@@ -296,7 +302,10 @@ namespace IctBaden.Modbus
                     break;
             }
 
-            Trace.TraceInformation(traceLines.ToString());
+            if (_enableCommandTrace)
+            {
+                Trace.TraceInformation(traceLines.ToString());
+            }
         }
 
     }
