@@ -23,7 +23,7 @@ namespace Cet.IO.Protocols
     /// <summary>
     /// Modbus client proxy
     /// </summary>
-    public class ModbusClient
+    internal class ModbusClient
         : IProtocol
     {
         public ModbusClient(IProtocolCodec codec)
