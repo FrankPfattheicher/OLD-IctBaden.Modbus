@@ -1,4 +1,4 @@
-﻿using System;
+﻿
 
 /*
  * Copyright 2012, 2013 by Mario Vernari, Cet Electronics
@@ -16,6 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// ReSharper disable once CheckNamespace
 namespace Cet.IO.Protocols
 {
     /// <summary>
