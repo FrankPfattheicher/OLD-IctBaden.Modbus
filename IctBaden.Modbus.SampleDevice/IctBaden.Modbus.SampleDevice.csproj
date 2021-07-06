@@ -9,8 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="IctBaden.Framework" Version="1.1.4" />
-      <PackageReference Include="IctBaden.Stonehenge3" Version="3.17.6" />
+      <PackageReference Include="IctBaden.Framework" Version="1.2.1" />
+      <PackageReference Include="IctBaden.Stonehenge3" Version="3.18.5" />
     </ItemGroup>
 
     <ItemGroup>
