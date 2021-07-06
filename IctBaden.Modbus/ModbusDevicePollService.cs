@@ -52,7 +52,7 @@ namespace IctBaden.Modbus
         private bool _oldConnected;
         private ushort[] _newProcessImage;
         private ushort[] _oldProcessImage;
-        private string _connectionContext = GetPollContext();
+        private readonly string _connectionContext = GetPollContext();
 
         /// <summary>
         /// Start polling already connected slave.
@@ -216,10 +216,7 @@ namespace IctBaden.Modbus
                 _retryCount++;
                 if (_retryCount >= 2)
                 {
-                    if (ProcessImage == null)
-                    {
-                        ProcessImage = _newProcessImage;
-                    }
+                    ProcessImage ??= _newProcessImage;
                     GoState(ConnectionStable);
                 }
                 return;
@@ -269,26 +266,33 @@ namespace IctBaden.Modbus
 
         private void PollRegistersOk()
         {
-            var ctx = GetPollContext();
-            var message = "ProcessImage:";
-            for (var offset = 0; offset < _pollCount; offset++)
+            if (_newProcessImage.Length != _pollCount)
             {
-                message += $" {_newProcessImage[offset]:X4}";
-                if (_newProcessImage[offset] == ProcessImage[offset]) continue;
-
-                ProcessImageChanged?.Invoke(new ProcessImageChangeEventParams(ctx, offset, ProcessImage[offset], _newProcessImage[offset]));
-                for (var bit = 0; bit < 16; bit++)
+                Trace.TraceError($"PollRegisters: Read returns {_newProcessImage.Length} registers, {_pollCount} expected");
+            }
+            else
+            {
+                var message = "ProcessImage:";
+                var ctx = GetPollContext();
+                for (var offset = 0; offset < _pollCount; offset++)
                 {
-                    var bitMask = 1 << bit;
-                    if ((_newProcessImage[offset] & bitMask) != (ProcessImage[offset] & bitMask))
+                    message += $" {_newProcessImage[offset]:X4}";
+                    if (_newProcessImage[offset] == ProcessImage[offset]) continue;
+
+                    ProcessImageChanged?.Invoke(new ProcessImageChangeEventParams(ctx, offset, ProcessImage[offset], _newProcessImage[offset]));
+                    for (var bit = 0; bit < 16; bit++)
                     {
-                        InputChanged?.Invoke(ctx, offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
+                        var bitMask = 1 << bit;
+                        if ((_newProcessImage[offset] & bitMask) != (ProcessImage[offset] & bitMask))
+                        {
+                            InputChanged?.Invoke(ctx, offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
+                        }
                     }
                 }
+                Trace.TraceInformation(message);
+                ProcessImage = _newProcessImage;
             }
 
-            Trace.TraceInformation(message);
-            ProcessImage = _newProcessImage;
             Thread.Sleep(PollInterval);
             GoState(PollRegisters);
         }
