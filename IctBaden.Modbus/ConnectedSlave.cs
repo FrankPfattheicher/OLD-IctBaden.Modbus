@@ -83,7 +83,7 @@ namespace IctBaden.Modbus
             var socket = (Socket)ar.AsyncState;
             try
             {
-                socket.EndConnect(ar);
+                socket?.EndConnect(ar);
             }
             catch (Exception ex)
             {
