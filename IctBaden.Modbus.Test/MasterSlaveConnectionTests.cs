@@ -118,15 +118,17 @@ namespace IctBaden.Modbus.Test
         public void ReadDiscreteRegister()
         {
             ConnectMasterAndSlave();
+            
+            _source.WriteRegisters(0, new ushort[] { 0x0000, 0x1111, 0x2222, 0x3333, 0x4444, 0x5555, 0x6666, 0x7777 });
 
             var result = _client.ReadInputRegisters(4, 1);
-            Assert.Equal(2, result[0]);
+            Assert.Equal(0x4444, result[0]);
 
             result = _client.ReadInputRegisters(7, 1);
-            Assert.Equal(3, result[0]);
+            Assert.Equal(0x7777, result[0]);
 
-            result = _client.ReadInputRegisters(4, 4);
-            Assert.Equal(new ushort[] { 2, 2, 3, 3 }, result);
+            result = _client.ReadInputRegisters(3, 4);
+            Assert.Equal(new ushort[] { 0x3333, 0x4444, 0x5555, 0x6666 }, result);
         }
 
         [Fact]

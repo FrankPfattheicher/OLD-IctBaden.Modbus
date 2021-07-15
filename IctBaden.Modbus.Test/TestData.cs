@@ -55,10 +55,6 @@ namespace IctBaden.Modbus.Test
         {
             var data = new ushort[count];
             Array.Copy(_registers, offset, data, 0, count);
-            for (var ix = 0; ix < count; ix++)
-            {
-                data[ix] = (ushort)((offset + ix) >> 1);
-            }
             return data;
         }
 

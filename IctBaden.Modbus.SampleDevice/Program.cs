@@ -21,7 +21,7 @@ namespace IctBaden.Modbus.SampleDevice
             var logger = Framework.Logging.Logger.DefaultFactory.CreateLogger("Modbus");
 
             var source = new TestData();
-            var device = new ModbusSlave("Sample", source, ModbusMaster.DefaultPort, 1);
+            var device = new ModbusSlave("Sample", source, 1502, 1);
             device.Start();
 
             var options = new StonehengeHostOptions
@@ -44,7 +44,7 @@ namespace IctBaden.Modbus.SampleDevice
                 return;
             }
 
-            var wnd = new HostWindow(host.BaseUrl);
+            var wnd = new HostWindow(host.BaseUrl, "Modbus", new Point(600, 800));
             if (!wnd.Open())
             {
                 Console.WriteLine("Failed to open window");
