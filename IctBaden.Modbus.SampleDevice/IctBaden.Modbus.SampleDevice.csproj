@@ -6,6 +6,8 @@
         <LangVersion>9</LangVersion>
         <IsPackable>false</IsPackable>
         <ApplicationIcon>Modbus.ico</ApplicationIcon>
+        <PackageIconUrl>Modbus.ico</PackageIconUrl>
+        <NeutralLanguage>de-DE</NeutralLanguage>
     </PropertyGroup>
 
     <ItemGroup>
