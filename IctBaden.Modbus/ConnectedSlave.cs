@@ -62,7 +62,11 @@ namespace IctBaden.Modbus
         
         public void ReConnect()
         {
-            if (_reconnecting) return;
+            if (_reconnecting)
+            {
+                Trace.TraceWarning("ConnectedSlave:ReConnect: Already reconnecting");
+                return;
+            }
 
             Disconnect();
 
@@ -70,6 +74,7 @@ namespace IctBaden.Modbus
             {
                 _reconnecting = true;
                 _socketConnection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                _socketConnection.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _socketConnection.BeginConnect(Address, Port, RequestCallback, _socketConnection);
             }
             catch (Exception ex)
