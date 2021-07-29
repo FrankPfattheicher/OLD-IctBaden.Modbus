@@ -1,5 +1,5 @@
 
-* 2.2.0	- ??.??.2021 Moved to netcoreapp3.1
+* 2.2.0	- 29.07.2021 Moved to netcoreapp3.1. Socket disconnect using Disconnect(true) instead of DisconnectAsync.
 * 2.1.3	- 06.07.2021 PollRegistersOk check read registers count
 * 2.1.2	- 23.04.2021 ModbusSlave.EnableCommandTrace (default off)
 * 2.1.1	- 15.04.2021 Slave GetConnectedMasters().

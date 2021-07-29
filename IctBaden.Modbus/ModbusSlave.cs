@@ -115,11 +115,12 @@ namespace IctBaden.Modbus
                     try
                     {
                         client.Shutdown(SocketShutdown.Both);
-                        var disconnect = new SocketAsyncEventArgs()
-                        {
-                            DisconnectReuseSocket = true
-                        };
-                        client.DisconnectAsync(disconnect);
+                        // var disconnect = new SocketAsyncEventArgs()
+                        // {
+                        //     DisconnectReuseSocket = true
+                        // };
+                        // client.DisconnectAsync(disconnect);
+                        client.Disconnect(true);
                     }
                     catch (Exception ex)
                     {
