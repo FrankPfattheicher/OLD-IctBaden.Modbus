@@ -69,7 +69,7 @@ namespace Cet.IO.Net
                     }
                     catch (Exception ex)
                     {
-                        Trace.TraceError(ex.Message);
+                        Trace.TraceError("IpClient.Query: " + ex.Message);
 
                         return !Port.Connected 
                             ? new CommResponse(data, CommResponse.ConnectionLost) 
@@ -91,7 +91,7 @@ namespace Cet.IO.Net
                         }
                         catch (Exception ex)
                         {
-                            Debug.WriteLine(ex.Message);
+                            Trace.TraceError("IpClient.Query: " + ex.Message);
                             length = 0;
                         }
 

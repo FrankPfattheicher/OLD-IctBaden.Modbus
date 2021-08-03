@@ -141,7 +141,19 @@ namespace IctBaden.Modbus
             Trace.TraceInformation("PollSource started.");
             while (_pollingTask != null)
             {
-                _state();
+                try
+                {
+                    _state();
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceError("PollSource: " + ex.Message);
+                    Trace.TraceError(ex.StackTrace);
+                    
+                    Thread.Sleep(FailureRetryInterval);
+                    
+                    GoState(EstablishConnection);
+                }
             }
             Trace.TraceInformation("PollSource terminated.");
         }
