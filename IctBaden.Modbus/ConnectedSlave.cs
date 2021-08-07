@@ -74,7 +74,8 @@ namespace IctBaden.Modbus
             {
                 _reconnecting = true;
                 _socketConnection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-                _socketConnection.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+                // Do NOT reuse address as client
+                _socketConnection.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, false);
                 _socketConnection.BeginConnect(Address, Port, RequestCallback, _socketConnection);
             }
             catch (Exception ex)
