@@ -63,7 +63,7 @@ namespace Cet.IO.Protocols
         
         public ModbusCommand(byte fc)
         {
-            this.FunctionCode = fc;
+            FunctionCode = fc;
         }
 
         /// <summary>

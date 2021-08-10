@@ -252,6 +252,19 @@ namespace IctBaden.Modbus
             return response?.Data;
         }
 
+        public bool WriteRegister(int offset, ushort value)
+        {
+            var cmd = new ModbusCommand(ModbusCommand.FuncWriteSingleRegister)
+            {
+                Address = Id,
+                Offset = offset,
+                Count = 1,
+                Data = new[] { value }
+            };
+            var response = Execute(cmd);
+            return (response != null);
+        }
+
         public bool WriteRegisters(int offset, ushort[] values)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncWriteMultipleRegisters)
