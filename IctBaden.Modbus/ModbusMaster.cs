@@ -17,7 +17,7 @@ namespace IctBaden.Modbus
     using System.Linq;
     using System.Net.Sockets;
 
-    public class ModbusMaster
+    public class ModbusMaster : IDisposable
     {
         public const int DefaultPort = 502;
 
@@ -128,5 +128,11 @@ namespace IctBaden.Modbus
                 ConnectedSlaveDevices.Clear();
             }
         }
+
+        public void Dispose()
+        {
+            DisconnectAllDevices();
+        }
+        
     }
 }
