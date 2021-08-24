@@ -21,7 +21,7 @@ namespace IctBaden.Modbus.SampleDevice
             var logger = Framework.Logging.Logger.DefaultFactory.CreateLogger("Modbus");
 
             var source = new TestData();
-            var device = new ModbusSlave("Sample", source, 1502, 1);
+            var device = new ModbusSlave("Sample", source, 502, 1);
             device.Start();
 
             var options = new StonehengeHostOptions

@@ -80,7 +80,8 @@ namespace IctBaden.Modbus
             }
             catch (Exception ex)
             {
-                Trace.TraceError("ConnectedSlave:ReConnect: Reconnect failed: " + ex.Message);
+                Trace.TraceError("ConnectedSlave:ReConnect: Reconnect failed #1: " + ex.Message);
+                _reconnecting = false;
             }
         }
 
@@ -93,7 +94,7 @@ namespace IctBaden.Modbus
             }
             catch (Exception ex)
             {
-                Trace.TraceError("ConnectedSlave:ReConnect: Reconnect failed: " + ex.Message);
+                Trace.TraceError("ConnectedSlave:ReConnect: Reconnect failed #2: " + ex.Message);
             }
 
             if (!ar.IsCompleted) return;

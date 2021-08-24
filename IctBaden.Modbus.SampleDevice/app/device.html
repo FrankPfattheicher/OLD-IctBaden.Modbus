@@ -2,29 +2,53 @@
 <div style="margin: 24px;">
     
     <h4>Modbus Device</h4>
+
     <table>
         <tr>
-            <th>
-                Connected Server        
-            </th>
-            <td>
-                &nbsp;
-            </td>
-            <td>
-                {{ConnectedServer}}
+            <td colspan="3">
+                <b>Connections: </b>
+                {{Connections}}
             </td>
         </tr>
-        <tr v-for="i in Inputs">
-            <th>
-                <span v-if="i.Number == 1">Inputs</span>
-            </th>
-            <th>
-                {{i.Number}}
-            </th>
-            <td>
-                <input type="checkbox" :checked="i.Value" @click="ToggleInput(i.Number)"/>
-            </td>
-        </tr>
+        
+        <td>
+            <table>
+                <tr v-for="i in Inputs">
+                    <th>
+                        <span v-if="i.Number == 1">Inputs&nbsp;&nbsp;&nbsp;</span>
+                    </th>
+                    <th>
+                        {{i.Number}}
+                    </th>
+                    <td>
+                        <input type="checkbox" :checked="i.Value" @click="ToggleInput(i.Number)"/>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        
+        <td>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        </td>
+
+        <td>
+            <table>
+                <tr v-for="i in Registers">
+                    <th>
+                        <span v-if="i.Number == 1">Registers&nbsp;&nbsp;&nbsp;</span>
+                    </th>
+                    <th>
+                        {{i.Number}}
+                    </th>
+                    <td>
+                        <input v-model="i.Value" @change="SetValue(i.Number, i.Value)"/>
+                    </td>
+                </tr>
+            </table>
+        </td>
+
     </table>
+    
     
 </div>

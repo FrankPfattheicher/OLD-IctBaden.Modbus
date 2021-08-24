@@ -3,6 +3,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
@@ -18,13 +19,17 @@ namespace IctBaden.Modbus
 
         public ConnectedSlave Slave => _pollDevice;
         public bool IsConnected => _pollDevice?.IsConnected ?? false;
-        public bool IsConnectionStable => _state == ConnectionStable || _state == PollRegisters || _state == PollRegistersOk;
+
+        public bool IsConnectionStable =>
+            _state == ConnectionStable || _state == PollRegisters || _state == PollRegistersOk;
+
         public ushort[] ProcessImage { get; private set; }
 
 
         public enum Register
         {
             Input,
+
             // ReSharper disable once UnusedMember.Global
             Holding
         };
@@ -79,7 +84,8 @@ namespace IctBaden.Modbus
         /// <param name="register"></param>
         /// <param name="offset"></param>
         /// <param name="count"></param>
-        public ModbusDevicePollService(ModbusMaster master, string address, ushort port, byte id, Register register, int offset, int count)
+        public ModbusDevicePollService(ModbusMaster master, string address, ushort port, byte id, Register register,
+            int offset, int count)
         {
             _master = master;
             _address = address;
@@ -100,6 +106,7 @@ namespace IctBaden.Modbus
 
         public bool Start(TimeSpan interval, bool forceInitialEvents)
         {
+            Trace.TraceInformation($"PollSource Start({interval.TotalSeconds:F1})");
             PollInterval = interval;
             _forceInitialEvents = forceInitialEvents;
 
@@ -114,6 +121,7 @@ namespace IctBaden.Modbus
 
         public void Stop()
         {
+            Trace.TraceInformation("PollSource Stop()");
             if (_pollingTask == null) return;
 
             var p = _pollingTask;
@@ -149,12 +157,13 @@ namespace IctBaden.Modbus
                 {
                     Trace.TraceError("PollSource: " + ex.Message);
                     Trace.TraceError(ex.StackTrace);
-                    
+
                     Thread.Sleep(FailureRetryInterval);
-                    
+
                     GoState(EstablishConnection);
                 }
             }
+
             Trace.TraceInformation("PollSource terminated.");
         }
 
@@ -169,7 +178,7 @@ namespace IctBaden.Modbus
         {
             if (_oldConnected)
             {
-                ConnectionChanged?.Invoke(_connectionContext, false);
+                OnConnectionChanged(_connectionContext, false);
                 _oldConnected = false;
             }
 
@@ -214,6 +223,7 @@ namespace IctBaden.Modbus
                 {
                     GoState(Disconnected);
                 }
+
                 return;
             }
 
@@ -231,6 +241,7 @@ namespace IctBaden.Modbus
                     ProcessImage ??= _newProcessImage;
                     GoState(ConnectionStable);
                 }
+
                 return;
             }
 
@@ -242,7 +253,7 @@ namespace IctBaden.Modbus
         {
             if (!_oldConnected)
             {
-                ConnectionChanged?.Invoke(_connectionContext, true);
+                OnConnectionChanged(_connectionContext, true);
                 _oldConnected = true;
             }
 
@@ -265,7 +276,7 @@ namespace IctBaden.Modbus
             _newProcessImage = ReadSource();
 
             var next = (_pollDevice.IsConnected && _newProcessImage != null)
-                ? (Action) PollRegistersOk
+                ? (Action)PollRegistersOk
                 : PollRegistersFailed;
 
             GoState(next);
@@ -273,14 +284,15 @@ namespace IctBaden.Modbus
 
         public static string GetPollContext() => Guid.NewGuid()
             .ToString("N")
-            .Substring(4,6)
+            .Substring(4, 6)
             .ToUpper();
 
         private void PollRegistersOk()
         {
             if (_newProcessImage.Length != _pollCount)
             {
-                Trace.TraceError($"PollRegisters: Read returns {_newProcessImage.Length} registers, {_pollCount} expected");
+                Trace.TraceError(
+                    $"PollRegisters: Read returns {_newProcessImage.Length} registers, {_pollCount} expected");
             }
             else
             {
@@ -291,16 +303,18 @@ namespace IctBaden.Modbus
                     message += $" {_newProcessImage[offset]:X4}";
                     if (_newProcessImage[offset] == ProcessImage[offset]) continue;
 
-                    ProcessImageChanged?.Invoke(new ProcessImageChangeEventParams(ctx, offset, ProcessImage[offset], _newProcessImage[offset]));
+                    OnProcessImageChanged(new ProcessImageChangeEventParams(ctx, offset, ProcessImage[offset],
+                        _newProcessImage[offset]));
                     for (var bit = 0; bit < 16; bit++)
                     {
                         var bitMask = 1 << bit;
                         if ((_newProcessImage[offset] & bitMask) != (ProcessImage[offset] & bitMask))
                         {
-                            InputChanged?.Invoke(ctx, offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
+                            OnInputChanged(ctx, offset * 16 + bit, (_newProcessImage[offset] & bitMask) != 0);
                         }
                     }
                 }
+
                 Trace.TraceInformation(message);
                 ProcessImage = _newProcessImage;
             }
@@ -311,12 +325,12 @@ namespace IctBaden.Modbus
 
         private void PollRegistersFailed()
         {
-            PollFailed?.Invoke(_connectionContext);
+            OnPollFailed(_connectionContext);
             _retryCount++;
             Thread.Sleep(PollRetryInterval);
 
             var next = (_pollDevice.IsConnected && _retryCount <= PollRetries)
-                ? (Action) PollRegisters
+                ? (Action)PollRegisters
                 : Disconnected;
 
             GoState(next);
@@ -326,9 +340,10 @@ namespace IctBaden.Modbus
         {
             if (_oldConnected)
             {
-                ConnectionChanged?.Invoke(_connectionContext, false);
+                OnConnectionChanged(_connectionContext, false);
                 _oldConnected = false;
             }
+
             GoState(Reconnect);
         }
 
@@ -345,6 +360,57 @@ namespace IctBaden.Modbus
         }
 
 
+        private void OnProcessImageChanged(ProcessImageChangeEventParams obj)
+        {
+            try
+            {
+                ProcessImageChanged?.Invoke(obj);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("PollRegisters.ProcessImageChanged: " + ex.Message);
+                Trace.TraceError(ex.StackTrace);
+            }
+        }
 
+        private void OnPollFailed(string obj)
+        {
+            try
+            {
+                PollFailed?.Invoke(obj);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("PollRegisters.PollFailed: " + ex.Message);
+                Trace.TraceError(ex.StackTrace);
+            }
+        }
+
+        private void OnInputChanged(string arg1, int arg2, bool arg3)
+        {
+            try
+            {
+                InputChanged?.Invoke(arg1, arg2, arg3);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("PollRegisters.InputChanged: " + ex.Message);
+                Trace.TraceError(ex.StackTrace);
+            }
+        }
+
+        private void OnConnectionChanged(string arg1, bool arg2)
+        {
+            try
+            {
+                ConnectionChanged?.Invoke(arg1, arg2);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("PollRegisters.ConnectionChanged: " + ex.Message);
+                Trace.TraceError(ex.StackTrace);
+            }
+        }
+        
     }
 }

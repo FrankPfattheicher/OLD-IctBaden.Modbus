@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Text;
 
 namespace IctBaden.Modbus.Test
 {
@@ -13,62 +12,104 @@ namespace IctBaden.Modbus.Test
         public void ReConnect() { }
 
 
-        private void TraceCoilData(string context)
-        {
-            var text = new StringBuilder();
-            text.Append($"{context} - Coils: ");
-            foreach (var coil in _coils)
-            {
-                text.Append($"{(coil ? 1 : 0)}, ");
-            }
-            Trace.TraceInformation(text.ToString());
-        }
-        
-        
         public bool[] ReadInputDiscretes(int offset, int count)
         {
+            Trace.TraceInformation($"ReadInputDiscretes({offset}, {count})");
+            offset %= 10000;
             var data = new bool[count];
-            Array.Copy(_coils, offset, data, 0, count);
-            for (var ix = 0; ix < count; ix++)
+            try
             {
-                data[ix] = ((offset + ix) & 1) != 0;
+                Array.Copy(_coils, offset, data, 0, count);
+                for (var ix = 0; ix < count; ix++)
+                {
+                    data[ix] = ((offset + ix) & 1) != 0;
+                }
+            }
+            catch
+            {
+                // ignore
             }
             return data;
         }
 
         public bool[] ReadCoils(int offset, int count)
         {
+            Trace.TraceInformation($"ReadCoils({offset}, {count})");
+            offset %= 10000;
             var data = new bool[count];
-            Array.Copy(_coils, offset, data, 0, count);
-            TraceCoilData("Read");
+            try
+            {
+                Array.Copy(_coils, offset, data, 0, count);
+            }
+            catch
+            {
+                // ignore
+            }
             return data;
         }
 
         public bool WriteCoils(int offset, bool[] values)
         {
-            Array.Copy(values, 0, _coils, offset, values.Length);
-            TraceCoilData("Write");
-            return true;
+            Trace.TraceInformation($"WriteCoils({offset}, {values.Length})");
+            offset %= 10000;
+            try
+            {
+                Array.Copy(values, 0, _coils, offset, values.Length);
+                return true;
+            }
+            catch
+            {
+                // ignore
+            }
+            return false;
         }
 
         public ushort[] ReadInputRegisters(int offset, int count)
         {
+            Trace.TraceInformation($"ReadInputRegisters({offset}, {count})");
+            offset %= 10000;
             var data = new ushort[count];
-            Array.Copy(_registers, offset, data, 0, count);
+            try
+            {
+                Array.Copy(_registers, offset, data, 0, count);
+            }
+            catch
+            {
+                // ignore
+            }
             return data;
         }
 
         public ushort[] ReadHoldingRegisters(int offset, int count)
         {
+            Trace.TraceInformation($"ReadHoldingRegisters({offset}, {count})");
+            offset %= 10000;
             var data = new ushort[count];
-            Array.Copy(_registers, offset, data, 0, count);
+            try
+            {
+                Array.Copy(_registers, offset, data, 0, count);
+            }
+            catch
+            {
+                // ignore
+            }
             return data;
         }
 
         public bool WriteRegisters(int offset, ushort[] values)
         {
-            Array.Copy(values, 0, _registers, offset, values.Length);
-            return true;
+            Trace.TraceInformation($"WriteRegisters({offset}, {values.Length})");
+            offset %= 10000;
+            try
+            {
+                Array.Copy(values, 0, _registers, offset, values.Length);
+                return true;
+            }
+            catch
+            {
+                // ignore
+            }
+            return false;
         }
     }
 }

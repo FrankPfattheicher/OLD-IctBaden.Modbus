@@ -4,6 +4,8 @@ using IctBaden.Modbus.Test;
 using IctBaden.Stonehenge3.Core;
 using IctBaden.Stonehenge3.ViewModel;
 
+// ReSharper disable UnusedMember.Global
+
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
@@ -14,7 +16,8 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
         private readonly ModbusSlave _device;
         private readonly TestData _data;
         public InputVm[] Inputs { get; private set; }
-        public string ConnectedServer { get; private set; }
+        public RegisterVm[] Registers { get; private set; }
+        public string Connections { get; private set; }
 
         public DeviceVm(AppSession session, ModbusSlave device, TestData data)
             : base(session)
@@ -26,7 +29,11 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
         public override void OnLoad()
         {
             Inputs = Enumerable.Range(1, 16)
-                .Select(i => new InputVm {Number = i})
+                .Select(i => new InputVm { Number = i })
+                .ToArray();
+
+            Registers = Enumerable.Range(1, 16)
+                .Select(i => new RegisterVm { Number = i })
                 .ToArray();
 
             _device.Connected += DeviceOnConnected;
@@ -40,19 +47,23 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
             {
                 DeviceOnDisconnected("");
             }
-            
+
             UpdateData();
         }
 
         private void DeviceOnDisconnected(string server)
         {
-            ConnectedServer = "NOT CONNECTED";
+            var cnn = _device.GetConnectedMasters();
+            Connections = cnn.Any()
+                ? string.Join("; ", cnn)
+                : "NOT CONNECTED";
+
             NotifyAllPropertiesChanged();
         }
 
         private void DeviceOnConnected(string server)
         {
-            ConnectedServer = server;
+            Connections = string.Join("; ", _device.GetConnectedMasters());
             NotifyAllPropertiesChanged();
         }
 
@@ -63,16 +74,25 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
             UpdateData();
         }
 
+        [ActionMethod]
+        public void SetValue(int number, string value)
+        {
+            if (!ushort.TryParse(value, out var newValue)) return;
+
+            Registers[number - 1].Value = newValue;
+            UpdateData();
+        }
+
         private void UpdateData()
         {
-            var dataValue = (ushort) Inputs
-                .Aggregate(0, (i, vm) => i | (vm.Value ? 1 : 0) << (vm.Number - 1));
-
-            _data.WriteRegisters(0, new[] {dataValue});
-            
             foreach (var input in Inputs)
             {
-                _data.WriteCoils(input.Number - 1, new[] {input.Value});
+                _data.WriteCoils(input.Number - 1, new[] { input.Value });
+            }
+
+            foreach (var register in Registers)
+            {
+                _data.WriteRegisters(register.Number - 1, new[] { register.Value });
             }
         }
 
