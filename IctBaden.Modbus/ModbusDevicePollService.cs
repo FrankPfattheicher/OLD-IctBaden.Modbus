@@ -2,7 +2,6 @@
 using System.Threading;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
@@ -48,7 +47,7 @@ namespace IctBaden.Modbus
         private readonly int _pollCount;
         private readonly string _traceId;
 
-        private Task _pollingTask;
+        private Thread _pollingThread;
         private bool _forceInitialEvents;
         private ConnectedSlave _pollDevice;
         private Action _state;
@@ -114,19 +113,19 @@ namespace IctBaden.Modbus
             _failureCount = 0;
             GoState(EstablishConnection);
 
-            _pollingTask = new Task(PollSource);
-            _pollingTask.Start();
+            _pollingThread = new Thread(PollSource);
+            _pollingThread.Start();
             return true;
         }
 
         public void Stop()
         {
             Trace.TraceInformation("PollSource Stop()");
-            if (_pollingTask == null) return;
+            if (_pollingThread == null) return;
 
-            var p = _pollingTask;
-            _pollingTask = null;
-            p?.Wait(TimeSpan.FromSeconds(10));
+            var p = _pollingThread;
+            _pollingThread = null;
+            p?.Join(TimeSpan.FromSeconds(10));
 
             if (_pollDevice != null)
             {
@@ -147,7 +146,7 @@ namespace IctBaden.Modbus
         private void PollSource()
         {
             Trace.TraceInformation("PollSource started.");
-            while (_pollingTask != null)
+            while (_pollingThread != null)
             {
                 try
                 {
