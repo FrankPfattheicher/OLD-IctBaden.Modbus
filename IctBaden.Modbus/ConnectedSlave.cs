@@ -171,7 +171,7 @@ namespace IctBaden.Modbus
                     if (_failures > 3)
                     {
                         //_socketConnection.DisconnectAsync(new SocketAsyncEventArgs { DisconnectReuseSocket = true });
-                        _socketConnection.Disconnect(true);
+                        _socketConnection.Disconnect(false);
                         Disconnected?.Invoke();
                     }
                     break;

@@ -137,7 +137,7 @@ namespace Cet.IO.Net
                             }
                         }
 
-                        Thread.Sleep(0);
+                        Thread.Sleep(10);
                     }
                 } //for
 
