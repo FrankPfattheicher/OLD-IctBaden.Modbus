@@ -115,8 +115,9 @@ namespace IctBaden.Modbus
                     try
                     {
                         client.Shutdown(SocketShutdown.Both);
-                        // Do NOT reuse address as client
-                        client.Disconnect(false);                    }
+                        // Do NOT reuse socket as client
+                        client.Disconnect(false);                    
+                    }
                     catch (Exception ex)
                     {
                         Debug.WriteLine(ex.Message);

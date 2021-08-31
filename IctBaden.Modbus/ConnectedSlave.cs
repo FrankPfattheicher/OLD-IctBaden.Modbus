@@ -111,7 +111,7 @@ namespace IctBaden.Modbus
                 if (_socketConnection.IsBound)
                 {
                     _socketConnection.Shutdown(SocketShutdown.Both);
-                    // Do NOT reuse address as client
+                    // Do NOT reuse socket as client
                     _socketConnection.Disconnect(false);
                 }
             }
@@ -166,7 +166,7 @@ namespace IctBaden.Modbus
                     _failures++;
                     if (_failures > 3)
                     {
-                        //_socketConnection.DisconnectAsync(new SocketAsyncEventArgs { DisconnectReuseSocket = true });
+                        // Do NOT reuse socket as client
                         _socketConnection.Disconnect(false);
                         Disconnected?.Invoke();
                     }
@@ -179,7 +179,7 @@ namespace IctBaden.Modbus
                     break;
                 case CommResponse.ConnectionLost:
                     status = "Connection Lost";
-                    // Do NOT reuse address as client
+                    // Do NOT reuse socket as client
                     _socketConnection.Disconnect(false);                    
                     Disconnected?.Invoke();
                     break;
