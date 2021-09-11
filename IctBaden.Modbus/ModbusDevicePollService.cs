@@ -96,7 +96,7 @@ namespace IctBaden.Modbus
             _registerToPoll = register;
             _pollOffset = offset;
             _pollCount = count;
-            _traceId = $"ModbusDevicePollService({address}:{port}#{id})";
+            _traceId = $"Poll({address}:{port}#{id})";
 
             PollRetryInterval = TimeSpan.FromSeconds(0.1);
             FailureRetryInterval = TimeSpan.FromSeconds(1);
@@ -146,7 +146,7 @@ namespace IctBaden.Modbus
         private void PollSource()
         {
             Trace.TraceInformation("PollSource started.");
-            ThreadName.Set(_traceId);
+            ThreadName.Set($"Poll:{_address}");
             while (_pollingThread != null)
             {
                 try
