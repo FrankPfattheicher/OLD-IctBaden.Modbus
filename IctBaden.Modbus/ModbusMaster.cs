@@ -1,8 +1,9 @@
-﻿/*
- * A Modbus Master is a TCP client connecting
- * to the Slaves and sends commands.
- * 
- */
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Net.Sockets;
+
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global
@@ -11,12 +12,10 @@
 
 namespace IctBaden.Modbus
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Net.Sockets;
-
+    /// <summary>
+    /// A Modbus Master is a TCP client connecting
+    /// to the Slaves and sends commands.
+    /// </summary>
     public class ModbusMaster : IDisposable
     {
         public const int DefaultPort = 502;

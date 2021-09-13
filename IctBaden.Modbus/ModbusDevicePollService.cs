@@ -43,8 +43,8 @@ namespace IctBaden.Modbus
         private readonly ushort _port;
         private readonly byte _id;
         private readonly Register _registerToPoll;
-        private readonly int _pollOffset;
-        private readonly int _pollCount;
+        private readonly ushort _pollOffset;
+        private readonly ushort _pollCount;
         private readonly string _traceId;
 
         private Thread _pollingThread;
@@ -94,8 +94,8 @@ namespace IctBaden.Modbus
             _oldConnected = true;
 
             _registerToPoll = register;
-            _pollOffset = offset;
-            _pollCount = count;
+            _pollOffset = (ushort)offset;
+            _pollCount = (ushort)count;
             _traceId = $"Poll({address}:{port}#{id})";
 
             PollRetryInterval = TimeSpan.FromSeconds(0.1);

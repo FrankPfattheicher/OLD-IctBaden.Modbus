@@ -18,7 +18,7 @@
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        bool[] ReadCoils(int offset, int count);
+        bool[] ReadCoils(ushort offset, ushort count);
 
         /// <summary>
         /// Using Modbus function 2
@@ -26,7 +26,7 @@
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        bool[] ReadInputDiscretes(int offset, int count);
+        bool[] ReadInputDiscretes(ushort offset, ushort count);
 
         /// <summary>
         /// Using Modbus function 3
@@ -34,7 +34,7 @@
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        ushort[] ReadHoldingRegisters(int offset, int count);
+        ushort[] ReadHoldingRegisters(ushort offset, ushort count);
 
         /// <summary>
         /// Using Modbus function 4 
@@ -42,7 +42,7 @@
         /// <param name="offset"></param>
         /// <param name="count"></param>
         /// <returns></returns>
-        ushort[] ReadInputRegisters(int offset, int count);
+        ushort[] ReadInputRegisters(ushort offset, ushort count);
 
         /// <summary>
         /// Using Modbus function 5
@@ -50,7 +50,7 @@
         /// <param name="offset"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        bool WriteCoils(int offset, bool[] values);
+        bool WriteCoils(ushort offset, bool[] values);
 
         /// <summary>
         /// Using Modbus function 6
@@ -58,6 +58,6 @@
         /// <param name="offset"></param>
         /// <param name="values"></param>
         /// <returns></returns>
-        bool WriteRegisters(int offset, ushort[] values);
+        bool WriteRegisters(ushort offset, ushort[] values);
     }
 }

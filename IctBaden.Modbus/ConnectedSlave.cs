@@ -188,7 +188,7 @@ namespace IctBaden.Modbus
             return null;
         }
 
-        public bool[] ReadInputDiscretes(int offset, int count)
+        public bool[] ReadInputDiscretes(ushort offset, ushort count)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncReadInputDiscretes)
             {
@@ -200,7 +200,7 @@ namespace IctBaden.Modbus
             return response?.Data.Select(d => d != 0).ToArray();
         }
 
-        public bool[] ReadCoils(int offset, int count)
+        public bool[] ReadCoils(ushort offset, ushort count)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncReadCoils)
             {
@@ -212,7 +212,7 @@ namespace IctBaden.Modbus
             return response?.Data.Select(d => d != 0).ToArray();
         }
 
-        public bool WriteCoils(int offset, bool[] values)
+        public bool WriteCoils(ushort offset, bool[] values)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncWriteCoil)
             {
@@ -225,7 +225,7 @@ namespace IctBaden.Modbus
             return (response != null);
         }
 
-        public ushort[] ReadInputRegisters(int offset, int count)
+        public ushort[] ReadInputRegisters(ushort offset, ushort count)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncReadInputRegisters)
             {
@@ -237,7 +237,7 @@ namespace IctBaden.Modbus
             return response?.Data;
         }
 
-        public ushort[] ReadHoldingRegisters(int offset, int count)
+        public ushort[] ReadHoldingRegisters(ushort offset, ushort count)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncReadMultipleRegisters)
             {
@@ -249,7 +249,7 @@ namespace IctBaden.Modbus
             return response?.Data;
         }
 
-        public bool WriteRegister(int offset, ushort value)
+        public bool WriteRegister(ushort offset, ushort value)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncWriteSingleRegister)
             {
@@ -262,7 +262,7 @@ namespace IctBaden.Modbus
             return (response != null);
         }
 
-        public bool WriteRegisters(int offset, ushort[] values)
+        public bool WriteRegisters(ushort offset, ushort[] values)
         {
             var cmd = new ModbusCommand(ModbusCommand.FuncWriteMultipleRegisters)
             {

@@ -31,6 +31,7 @@ namespace IctBaden.Modbus
         private readonly List<Socket> _connectedMasters;
         public bool IsConnected => _connectedMasters.Count > 0;
         public string[] GetConnectedMasters() => _connectedMasters
+            .Where(m => m.Connected)
             .Select(m => m.RemoteEndPoint.ToString())
             .ToArray();
 
@@ -208,7 +209,7 @@ namespace IctBaden.Modbus
             switch (command.FunctionCode)
             {
                 case ModbusCommand.FuncReadCoils:
-                    var boolArray = DataAccess.ReadCoils(command.Offset, command.Count);
+                    var boolArray = DataAccess.ReadCoils((ushort)command.Offset, (ushort)command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
                         command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
@@ -219,7 +220,7 @@ namespace IctBaden.Modbus
 
 
                 case ModbusCommand.FuncReadInputDiscretes:
-                    boolArray = DataAccess.ReadInputDiscretes(command.Offset, command.Count);
+                    boolArray = DataAccess.ReadInputDiscretes((ushort)command.Offset, (ushort)command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
                         command.Data[i] = (ushort)(boolArray[i] ? 1 : 0);
@@ -230,7 +231,7 @@ namespace IctBaden.Modbus
 
 
                 case ModbusCommand.FuncWriteCoil:
-                    DataAccess.WriteCoils(command.Offset, new[] { command.Data[0] != 0 });
+                    DataAccess.WriteCoils((ushort)command.Offset, new[] { command.Data[0] != 0 });
                     traceLines.AppendLine($"[{command.Offset}]={command.Data[0]} ");
                     break;
 
@@ -245,13 +246,13 @@ namespace IctBaden.Modbus
                         boolList.Add(value);
                         traceLines.Append($"[{index}]={value} ");
                     }
-                    DataAccess.WriteCoils(command.Offset, boolList.ToArray());
+                    DataAccess.WriteCoils((ushort)command.Offset, boolList.ToArray());
                     traceLines.AppendLine(string.Empty);
                     break;
 
 
                 case ModbusCommand.FuncReadInputRegisters:
-                    command.Data = DataAccess.ReadInputRegisters(command.Offset, command.Count);
+                    command.Data = DataAccess.ReadInputRegisters((ushort)command.Offset, (ushort)command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
@@ -261,7 +262,7 @@ namespace IctBaden.Modbus
 
 
                 case ModbusCommand.FuncReadMultipleRegisters:
-                    command.Data = DataAccess.ReadHoldingRegisters(command.Offset, command.Count);
+                    command.Data = DataAccess.ReadHoldingRegisters((ushort)command.Offset, (ushort)command.Count);
                     for (var i = 0; i < command.Count; i++)
                     {
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
@@ -270,7 +271,7 @@ namespace IctBaden.Modbus
                     break;
 
                 case ModbusCommand.FuncWriteMultipleRegisters:
-                    DataAccess.WriteRegisters(command.Offset, command.Data);
+                    DataAccess.WriteRegisters((ushort)command.Offset, command.Data);
                     for (var i = 0; i < command.Count; i++)
                     {
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
@@ -279,7 +280,7 @@ namespace IctBaden.Modbus
                     break;
 
                 case ModbusCommand.FuncWriteSingleRegister:
-                    DataAccess.WriteRegisters(command.Offset, command.Data);
+                    DataAccess.WriteRegisters((ushort)command.Offset, command.Data);
                     for (var i = 0; i < command.Count; i++)
                     {
                         traceLines.Append($"[{command.Offset + i}]={command.Data[i]} ");
