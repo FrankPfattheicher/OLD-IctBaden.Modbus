@@ -87,9 +87,7 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataFormat.ENUM:
                     var e = enumValues
                         .FirstOrDefault(v => v.Value?.ToString() == value.ToString());
-                    return e.Key != null
-                        ? $"{e.Value}: {e.Key}"
-                        : value.ToString();
+                    return e.Key ?? value.ToString();
                 case ModbusDataFormat.TAGLIST:
                     return "TAGLIST";
                 case ModbusDataFormat.FIX0:
