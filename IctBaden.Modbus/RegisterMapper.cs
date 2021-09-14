@@ -2,7 +2,7 @@
 {
     public static class RegisterMapper
     {
-        public static void FromType(IDataAccess registers, object data)
+        public static void FromType(IDataAccess registers, ushort offset, object data)
         {
             
         }

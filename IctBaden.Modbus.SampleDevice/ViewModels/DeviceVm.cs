@@ -87,12 +87,12 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
         {
             foreach (var input in Inputs)
             {
-                _data.WriteCoils(input.Number - 1, new[] { input.Value });
+                _data.WriteCoils((ushort)(input.Number - 1), new[] { input.Value });
             }
 
             foreach (var register in Registers)
             {
-                _data.WriteRegisters(register.Number - 1, new[] { register.Value });
+                _data.WriteRegisters((ushort)(register.Number - 1), new[] { register.Value });
             }
         }
 

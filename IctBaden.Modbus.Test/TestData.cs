@@ -12,7 +12,7 @@ namespace IctBaden.Modbus.Test
         public void ReConnect() { }
 
 
-        public bool[] ReadInputDiscretes(int offset, int count)
+        public bool[] ReadInputDiscretes(ushort offset, ushort count)
         {
             Trace.TraceInformation($"ReadInputDiscretes({offset}, {count})");
             offset %= 10000;
@@ -32,7 +32,7 @@ namespace IctBaden.Modbus.Test
             return data;
         }
 
-        public bool[] ReadCoils(int offset, int count)
+        public bool[] ReadCoils(ushort offset, ushort count)
         {
             Trace.TraceInformation($"ReadCoils({offset}, {count})");
             offset %= 10000;
@@ -48,7 +48,7 @@ namespace IctBaden.Modbus.Test
             return data;
         }
 
-        public bool WriteCoils(int offset, bool[] values)
+        public bool WriteCoils(ushort offset, bool[] values)
         {
             Trace.TraceInformation($"WriteCoils({offset}, {values.Length})");
             offset %= 10000;
@@ -64,7 +64,7 @@ namespace IctBaden.Modbus.Test
             return false;
         }
 
-        public ushort[] ReadInputRegisters(int offset, int count)
+        public ushort[] ReadInputRegisters(ushort offset, ushort count)
         {
             Trace.TraceInformation($"ReadInputRegisters({offset}, {count})");
             offset %= 10000;
@@ -80,7 +80,7 @@ namespace IctBaden.Modbus.Test
             return data;
         }
 
-        public ushort[] ReadHoldingRegisters(int offset, int count)
+        public ushort[] ReadHoldingRegisters(ushort offset, ushort count)
         {
             Trace.TraceInformation($"ReadHoldingRegisters({offset}, {count})");
             offset %= 10000;
@@ -96,7 +96,7 @@ namespace IctBaden.Modbus.Test
             return data;
         }
 
-        public bool WriteRegisters(int offset, ushort[] values)
+        public bool WriteRegisters(ushort offset, ushort[] values)
         {
             Trace.TraceInformation($"WriteRegisters({offset}, {values.Length})");
             offset %= 10000;

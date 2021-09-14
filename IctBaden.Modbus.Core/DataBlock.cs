@@ -1,6 +1,6 @@
 ﻿namespace IctBaden.Modbus
 {
-    public record DataBlock
+    public class DataBlock
     {
         public ushort Offset { get; set; }
         public ushort Size { get; set; }

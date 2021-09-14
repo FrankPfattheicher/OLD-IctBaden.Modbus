@@ -22,5 +22,9 @@
     <ItemGroup>
       <PackageReference Include="IctBaden.Framework" Version="1.2.2" />
     </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\IctBaden.Modbus.Core\IctBaden.Modbus.Core.csproj" />
+    </ItemGroup>
 
 </Project>
