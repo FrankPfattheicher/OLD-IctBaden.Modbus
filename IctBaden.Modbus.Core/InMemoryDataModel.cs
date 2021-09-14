@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using IctBaden.Modbus.Core;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
