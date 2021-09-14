@@ -52,35 +52,11 @@ namespace IctBaden.Modbus.Core
             }
         }
 
-
         public static string Format(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat, Dictionary<string, object> enumValues)
         {
             if (IsNaN(dataType, data)) return NotANumber;
 
-            object value;
-            switch (dataType)
-            {
-                case ModbusDataType.S16:
-                    value = (int)data[0];
-                    break;
-                case ModbusDataType.S32:
-                    value = data[0] * 0x10000 + data[1];
-                    break;
-                case ModbusDataType.STR32:
-                    value = (char)data[0];
-                    break;
-                case ModbusDataType.U16:
-                    value = (uint)data[0];
-                    break;
-                case ModbusDataType.U32:
-                    value = data[0] * 0x10000u + data[1];
-                    break;
-                case ModbusDataType.U64:
-                    value = data[0] * 0x1000000000000u + data[1] * 0x100000000u + data[2] * 0x1000u + data[3];
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
-            }
+            object value = GetValue(data, dataType);
 
             switch (dataFormat)
             {
@@ -130,6 +106,38 @@ namespace IctBaden.Modbus.Core
             }
         }
 
+        public static object GetValue(ushort[] data, ModbusDataType dataType)
+        {
+            if (IsNaN(dataType, data)) return null;
+
+            object value;
+            switch (dataType)
+            {
+                case ModbusDataType.S16:
+                    value = (int)data[0];
+                    break;
+                case ModbusDataType.S32:
+                    value = data[0] * 0x10000 + data[1];
+                    break;
+                case ModbusDataType.STR32:
+                    value = (char)data[0];
+                    break;
+                case ModbusDataType.U16:
+                    value = (uint)data[0];
+                    break;
+                case ModbusDataType.U32:
+                    value = data[0] * 0x10000u + data[1];
+                    break;
+                case ModbusDataType.U64:
+                    value = data[0] * 0x1000000000000u + data[1] * 0x100000000u + data[2] * 0x1000u + data[3];
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
+            }
+
+            return value;
+        }
+        
         public static ushort[] GetData(string value, ModbusDataType dataType, ModbusDataFormat dataFormat)
         {
             var size = GetSize(dataType);
