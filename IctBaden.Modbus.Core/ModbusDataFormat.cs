@@ -25,6 +25,7 @@ namespace IctBaden.Modbus.Core
         UTF8,
         DT,
         FLOAT,
-        DOUBLE
+        DOUBLE,
+        FLAGS
     }
 }
