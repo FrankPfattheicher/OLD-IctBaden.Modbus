@@ -53,6 +53,8 @@ namespace IctBaden.Modbus.Core
                     return data[0] == 0xFFFF && data[1] == 0xFFFF && data[2] == 0xFFFF && data[3] == 0xFFFF;
                 case ModbusDataType.FLOAT:
                     return false;
+                case ModbusDataType.DOUBLE:
+                    return false;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
             }
@@ -111,6 +113,10 @@ namespace IctBaden.Modbus.Core
                         .Select(ix => (UniversalConverter.ConvertTo<ulong>(value) & ((ulong)1 << ix)) != 0)
                         .Select(bit => bit ? "1 " : "0 ")
                         .Aggregate((s, b) => s + b);
+                case ModbusDataFormat.FLOAT:
+                    return $"{Convert.ToSingle(value)}";
+                case ModbusDataFormat.DOUBLE:
+                    return $"{Convert.ToDouble(value)}";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataFormat), dataFormat, null);
             }
@@ -121,6 +127,7 @@ namespace IctBaden.Modbus.Core
             if (IsNaN(dataType, data)) return null;
 
             object value;
+            byte[] bytes;
             switch (dataType)
             {
                 case ModbusDataType.S16:
@@ -142,7 +149,7 @@ namespace IctBaden.Modbus.Core
                     value = data[0] * 0x1000000000000u + data[1] * 0x100000000u + data[2] * 0x1000u + data[3];
                     break;
                 case ModbusDataType.FLOAT:
-                    var bytes = new[]
+                    bytes = new[]
                     {
                         (byte)(data[0] >> 8),
                         (byte)(data[0] & 0xFF),
@@ -150,6 +157,20 @@ namespace IctBaden.Modbus.Core
                         (byte)(data[1] & 0xFF)
                     };
                     value = BitConverter.ToSingle(bytes);
+                    break;
+                case ModbusDataType.DOUBLE:
+                    bytes = new[]
+                    {
+                        (byte)(data[0] >> 8),
+                        (byte)(data[0] & 0xFF),
+                        (byte)(data[1] >> 8),
+                        (byte)(data[1] & 0xFF),
+                        (byte)(data[2] >> 8),
+                        (byte)(data[2] & 0xFF),
+                        (byte)(data[3] >> 8),
+                        (byte)(data[3] & 0xFF)
+                    };
+                    value = BitConverter.ToDouble(bytes);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
@@ -222,6 +243,14 @@ namespace IctBaden.Modbus.Core
                 var bytes = BitConverter.GetBytes(floatValue);
                 data[0] = (ushort)((ushort)(bytes[0] << 8) + (ushort)bytes[1]);
                 data[1] = (ushort)((ushort)(bytes[2] << 8) + (ushort)bytes[3]);
+            }
+            else if (dataType is ModbusDataType.DOUBLE && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var dblValue))
+            {
+                var bytes = BitConverter.GetBytes(dblValue);
+                data[0] = (ushort)((ushort)(bytes[0] << 8) + (ushort)bytes[1]);
+                data[1] = (ushort)((ushort)(bytes[2] << 8) + (ushort)bytes[3]);
+                data[2] = (ushort)((ushort)(bytes[4] << 8) + (ushort)bytes[5]);
+                data[3] = (ushort)((ushort)(bytes[6] << 8) + (ushort)bytes[7]);
             }
 
             return data;
