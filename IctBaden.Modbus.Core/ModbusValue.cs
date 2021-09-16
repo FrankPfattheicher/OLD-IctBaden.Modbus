@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using IctBaden.Framework.Types;
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable StringLiteralTypo
@@ -57,7 +58,8 @@ namespace IctBaden.Modbus.Core
             }
         }
 
-        public static string Format(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat, Dictionary<string, object> enumValues)
+        public static string Format(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat,
+            Dictionary<string, object> enumValues)
         {
             if (IsNaN(dataType, data)) return NotANumber;
 
@@ -104,6 +106,11 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataFormat.DT:
                     var dt = DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(value));
                     return $"{dt:G}";
+                case ModbusDataFormat.FLAGS:
+                    return Enumerable.Range(0, data.Length * 16)
+                        .Select(ix => (UniversalConverter.ConvertTo<ulong>(value) & ((ulong)1 << ix)) != 0)
+                        .Select(bit => bit ? "1 " : "0 ")
+                        .Aggregate((s, b) => s + b);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataFormat), dataFormat, null);
             }
@@ -150,7 +157,7 @@ namespace IctBaden.Modbus.Core
 
             return value;
         }
-        
+
         public static ushort[] GetData(string value, ModbusDataType dataType, ModbusDataFormat dataFormat)
         {
             var size = GetSize(dataType);
