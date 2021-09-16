@@ -1,10 +1,9 @@
 ﻿using System.Linq;
-using IctBaden.Modbus.Core;
 using Microsoft.Extensions.Logging;
 
 // ReSharper disable TemplateIsNotCompileTimeConstantProblem
 
-namespace IctBaden.Modbus
+namespace IctBaden.Modbus.Core
 {
     /// <summary>
     /// The Modbus Data model defines four tables as follows

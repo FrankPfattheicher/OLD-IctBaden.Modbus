@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
+using IctBaden.Modbus.Core;
 
 // ReSharper disable MemberCanBePrivate.Global
 

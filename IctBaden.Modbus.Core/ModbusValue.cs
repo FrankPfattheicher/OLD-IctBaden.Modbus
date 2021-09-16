@@ -241,16 +241,16 @@ namespace IctBaden.Modbus.Core
             else if (dataType is ModbusDataType.FLOAT && float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatValue))
             {
                 var bytes = BitConverter.GetBytes(floatValue);
-                data[0] = (ushort)((ushort)(bytes[0] << 8) + (ushort)bytes[1]);
-                data[1] = (ushort)((ushort)(bytes[2] << 8) + (ushort)bytes[3]);
+                data[0] = (ushort)((ushort)(bytes[0] << 8) + bytes[1]);
+                data[1] = (ushort)((ushort)(bytes[2] << 8) + bytes[3]);
             }
             else if (dataType is ModbusDataType.DOUBLE && double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var dblValue))
             {
                 var bytes = BitConverter.GetBytes(dblValue);
-                data[0] = (ushort)((ushort)(bytes[0] << 8) + (ushort)bytes[1]);
-                data[1] = (ushort)((ushort)(bytes[2] << 8) + (ushort)bytes[3]);
-                data[2] = (ushort)((ushort)(bytes[4] << 8) + (ushort)bytes[5]);
-                data[3] = (ushort)((ushort)(bytes[6] << 8) + (ushort)bytes[7]);
+                data[0] = (ushort)((ushort)(bytes[0] << 8) + bytes[1]);
+                data[1] = (ushort)((ushort)(bytes[2] << 8) + bytes[3]);
+                data[2] = (ushort)((ushort)(bytes[4] << 8) + bytes[5]);
+                data[3] = (ushort)((ushort)(bytes[6] << 8) + bytes[7]);
             }
 
             return data;

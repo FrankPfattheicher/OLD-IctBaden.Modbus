@@ -11,6 +11,7 @@ using Cet.IO;
 using Cet.IO.Net;
 using Cet.IO.Protocols;
 using IctBaden.Framework.AppUtils;
+using IctBaden.Modbus.Core;
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
 // ReSharper disable UnusedMember.Global

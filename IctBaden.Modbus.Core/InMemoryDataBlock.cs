@@ -1,4 +1,4 @@
-﻿namespace IctBaden.Modbus
+﻿namespace IctBaden.Modbus.Core
 {
     /// <summary>
     /// Represents an in memory data block

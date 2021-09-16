@@ -25,7 +25,7 @@ namespace IctBaden.Modbus
                 {
                     // s = prctl(PR_SET_NAME,"myProcess\0",NULL,NULL,NULL); // name: myProcess
                     var bytes = Encoding.ASCII.GetBytes(name + "\0");
-                    var result = prctl(PR_SET_NAME, bytes, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+                    prctl(PR_SET_NAME, bytes, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
                 }
             }
             catch
