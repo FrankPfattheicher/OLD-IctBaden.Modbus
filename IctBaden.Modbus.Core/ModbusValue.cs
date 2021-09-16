@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 
@@ -22,8 +23,10 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataType.S32:
                 case ModbusDataType.STR32:
                 case ModbusDataType.U32:
+                case ModbusDataType.FLOAT:
                     return 2;
                 case ModbusDataType.U64:
+                case ModbusDataType.DOUBLE:
                     return 4;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
@@ -47,6 +50,8 @@ namespace IctBaden.Modbus.Core
                     return data[0] == 0xFFFF && data[1] == 0xFFFF;
                 case ModbusDataType.U64:
                     return data[0] == 0xFFFF && data[1] == 0xFFFF && data[2] == 0xFFFF && data[3] == 0xFFFF;
+                case ModbusDataType.FLOAT:
+                    return false;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
             }
@@ -129,6 +134,16 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataType.U64:
                     value = data[0] * 0x1000000000000u + data[1] * 0x100000000u + data[2] * 0x1000u + data[3];
                     break;
+                case ModbusDataType.FLOAT:
+                    var bytes = new[]
+                    {
+                        (byte)(data[0] >> 8),
+                        (byte)(data[0] & 0xFF),
+                        (byte)(data[1] >> 8),
+                        (byte)(data[1] & 0xFF)
+                    };
+                    value = BitConverter.ToSingle(bytes);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
             }
@@ -194,6 +209,12 @@ namespace IctBaden.Modbus.Core
                         data[3] = (ushort)(dataValue & 0xFFFF);
                         break;
                 }
+            }
+            else if (dataType is ModbusDataType.FLOAT && float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var floatValue))
+            {
+                var bytes = BitConverter.GetBytes(floatValue);
+                data[0] = (ushort)((ushort)(bytes[0] << 8) + (ushort)bytes[1]);
+                data[1] = (ushort)((ushort)(bytes[2] << 8) + (ushort)bytes[3]);
             }
 
             return data;
