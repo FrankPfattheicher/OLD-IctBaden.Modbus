@@ -257,5 +257,19 @@ namespace IctBaden.Modbus.Core
 
             return data;
         }
+
+
+        public static TData GetRegisterValue<TData>(IDataAccess data, ushort offset, ModbusDataType dataType, ModbusDataFormat dataFormat)
+        {
+            var registerValues = data.ReadHoldingRegisters(offset, GetSize(dataType));
+            return UniversalConverter.ConvertTo<TData>(GetValue(registerValues, dataType, dataFormat));
+        }
+
+        public static void SetRegisterValue(IDataAccess data, ushort offset, string value, ModbusDataType dataType, ModbusDataFormat dataFormat)
+        {
+            var registerValues = GetData(value, dataType, dataFormat); 
+            data.WriteRegisters(offset, registerValues);
+        }
+
     }
 }
