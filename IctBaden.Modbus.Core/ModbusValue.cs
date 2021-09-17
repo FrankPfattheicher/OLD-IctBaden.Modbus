@@ -34,7 +34,7 @@ namespace IctBaden.Modbus.Core
             }
         }
 
-        public static bool IsNaN(ModbusDataType dataType, ushort[] data)
+        public static bool IsNaN(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat)
         {
             if (data == null) return true;
             switch (dataType)
@@ -48,7 +48,9 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataType.U16:
                     return data[0] == 0xFFFF;
                 case ModbusDataType.U32:
-                    return data[0] == 0xFFFF && data[1] == 0xFFFF;
+                    return dataFormat == ModbusDataFormat.ENUM 
+                        ? data[0] == 0x00FF && data[1] == 0xFFFD
+                        : data[0] == 0xFFFF && data[1] == 0xFFFF;
                 case ModbusDataType.U64:
                     return data[0] == 0xFFFF && data[1] == 0xFFFF && data[2] == 0xFFFF && data[3] == 0xFFFF;
                 case ModbusDataType.FLOAT:
@@ -63,16 +65,16 @@ namespace IctBaden.Modbus.Core
         public static string Format(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat,
             Dictionary<string, object> enumValues)
         {
-            if (IsNaN(dataType, data)) return NotANumber;
+            if (IsNaN(data, dataType, dataFormat)) return NotANumber;
 
-            object value = GetValue(data, dataType);
+            object value = GetValue(data, dataType, dataFormat);
 
             switch (dataFormat)
             {
                 case ModbusDataFormat.ENUM:
                     var e = enumValues
                         .FirstOrDefault(v => v.Value?.ToString() == value.ToString());
-                    return e.Key ?? value.ToString();
+                    return e.Key ?? $"{value}  0x{value:X8}";
                 case ModbusDataFormat.TAGLIST:
                     return "TAGLIST";
                 case ModbusDataFormat.FIX0:
@@ -122,9 +124,9 @@ namespace IctBaden.Modbus.Core
             }
         }
 
-        public static object GetValue(ushort[] data, ModbusDataType dataType)
+        public static object GetValue(ushort[] data, ModbusDataType dataType, ModbusDataFormat dataFormat)
         {
-            if (IsNaN(dataType, data)) return null;
+            if (IsNaN(data, dataType, dataFormat)) return null;
 
             object value;
             byte[] bytes;

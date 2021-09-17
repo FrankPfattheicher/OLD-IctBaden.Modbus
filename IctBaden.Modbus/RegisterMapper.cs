@@ -39,7 +39,7 @@ namespace IctBaden.Modbus
                 var size = ModbusValue.GetSize(modbusAttribute.Type);
                 var registerValues = registers.ReadHoldingRegisters(offset, size);
 
-                var value = UniversalConverter.ConvertToType(ModbusValue.GetValue(registerValues, modbusAttribute.Type), info.FieldType);
+                var value = UniversalConverter.ConvertToType(ModbusValue.GetValue(registerValues, modbusAttribute.Type, modbusAttribute.Format), info.FieldType);
                 info.SetValue(data, value);
                 
                 offset += (ushort)registerValues.Length;
