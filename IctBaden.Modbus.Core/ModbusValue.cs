@@ -22,13 +22,14 @@ namespace IctBaden.Modbus.Core
                 case ModbusDataType.S16:
                     return 1;
                 case ModbusDataType.S32:
-                case ModbusDataType.STR32:
                 case ModbusDataType.U32:
                 case ModbusDataType.FLOAT:
                     return 2;
                 case ModbusDataType.U64:
                 case ModbusDataType.DOUBLE:
                     return 4;
+                case ModbusDataType.STR32:
+                    return 16;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(dataType), dataType, null);
             }
@@ -253,6 +254,14 @@ namespace IctBaden.Modbus.Core
                 data[1] = (ushort)((ushort)(bytes[2] << 8) + bytes[3]);
                 data[2] = (ushort)((ushort)(bytes[4] << 8) + bytes[5]);
                 data[3] = (ushort)((ushort)(bytes[6] << 8) + bytes[7]);
+            }
+            else if (dataType is ModbusDataType.STR32)
+            {
+                var dataValue = UniversalConverter.ConvertTo<ushort>(value);
+                data[0] = (ushort)(dataValue >> 48 & 0xFFFF);
+                data[1] = (ushort)(dataValue >> 32 & 0xFFFF);
+                data[2] = (ushort)(dataValue >> 16 & 0xFFFF);
+                data[3] = (ushort)(dataValue & 0xFFFF);
             }
 
             return data;

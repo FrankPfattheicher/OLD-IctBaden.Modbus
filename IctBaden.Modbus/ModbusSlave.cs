@@ -204,7 +204,7 @@ namespace IctBaden.Modbus
 
             var traceLines = new StringBuilder();
 
-            traceLines.AppendLine($"[{Port}:{Id}] Command fn={command.FunctionCode}, addr={command.Address}, cnt={command.Count}");
+            traceLines.AppendLine($"[{Port}:{Id}] Command fn={command.FunctionCode}, address={command.Address}, cnt={command.Count}");
 
             //take the proper function command handler
             switch (command.FunctionCode)
