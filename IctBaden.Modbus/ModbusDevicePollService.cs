@@ -146,7 +146,7 @@ namespace IctBaden.Modbus
         private void PollSource()
         {
             Trace.TraceInformation("PollSource started.");
-            ThreadName.Set($"Poll:{_address}");
+            ThreadName.Set(_address);
             while (_pollingThread != null)
             {
                 try
