@@ -149,7 +149,7 @@ namespace IctBaden.Modbus.Core
                         chars.Add((byte)(data[i] & 0xFF));
                     }
                     chars.Add(0);
-                    value = Encoding.ASCII.GetString(chars);
+                    value = Encoding.ASCII.GetString(chars.ToArray());
                     break;
                 case ModbusDataType.U16:
                     value = (uint)data[0];
