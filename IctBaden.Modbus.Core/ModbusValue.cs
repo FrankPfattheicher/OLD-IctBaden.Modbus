@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Text;
 using IctBaden.Framework.Types;
 
 // ReSharper disable MemberCanBePrivate.Global
@@ -129,6 +130,7 @@ namespace IctBaden.Modbus.Core
         {
             if (IsNaN(data, dataType, dataFormat)) return null;
 
+            var size = GetSize(dataType);
             object value;
             byte[] bytes;
             switch (dataType)
@@ -140,7 +142,14 @@ namespace IctBaden.Modbus.Core
                     value = data[0] * 0x10000 + data[1];
                     break;
                 case ModbusDataType.STR32:
-                    value = (char)data[0];
+                    var chars = new List<byte>();
+                    for (var i = 0; i < size; i++)
+                    {
+                        chars.Add((byte)(data[i] >> 8));
+                        chars.Add((byte)(data[i] & 0xFF));
+                    }
+                    chars.Add(0);
+                    value = Encoding.ASCII.GetString(chars);
                     break;
                 case ModbusDataType.U16:
                     value = (uint)data[0];
@@ -257,11 +266,16 @@ namespace IctBaden.Modbus.Core
             }
             else if (dataType is ModbusDataType.STR32)
             {
-                var dataValue = UniversalConverter.ConvertTo<ushort>(value);
-                data[0] = (ushort)(dataValue >> 48 & 0xFFFF);
-                data[1] = (ushort)(dataValue >> 32 & 0xFFFF);
-                data[2] = (ushort)(dataValue >> 16 & 0xFFFF);
-                data[3] = (ushort)(dataValue & 0xFFFF);
+                var text = UniversalConverter.ConvertTo<string>(value);
+                var bytes = Encoding.ASCII.GetBytes(text)
+                    .Concat(Enumerable.Range(1, size * 2).Select(i => (byte)0))
+                    .Take(size * 2)
+                    .ToArray();
+
+                for (var i = 0; i < size; i++)
+                {
+                    data[i] = (ushort)((ushort)(bytes[i * 2] << 8) + bytes[i * 2 + 1]);
+                }
             }
 
             return data;
