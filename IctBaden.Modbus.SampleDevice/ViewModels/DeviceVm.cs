@@ -71,6 +71,19 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
         public void ToggleInput(int number)
         {
             Inputs[number - 1].Value = !Inputs[number - 1].Value;
+
+            var registerIndex = (number - 1) / 16;
+            var registerMask  = (ushort)(1 << ((number - 1) % 16));
+
+            if (Inputs[number - 1].Value)
+            {
+                Registers[registerIndex].Value |= registerMask;                
+            }
+            else
+            {
+                Registers[registerIndex].Value &= (ushort)~registerMask;                
+            }
+            
             UpdateData();
         }
 
@@ -80,6 +93,16 @@ namespace IctBaden.Modbus.SampleDevice.ViewModels
             if (!ushort.TryParse(value, out var newValue)) return;
 
             Registers[number - 1].Value = newValue;
+
+            if (number == 1)
+            {
+                var registerMask = 1;
+                for (var ix = 0; ix < 16; ix++, registerMask <<= 1)
+                {
+                    Inputs[ix].Value = (newValue & registerMask) != 0;
+                }
+            }
+            
             UpdateData();
         }
 
